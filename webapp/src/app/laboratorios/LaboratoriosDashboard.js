@@ -415,7 +415,7 @@ export default function LaboratoriosDashboard({ initialData }) {
         <NuevoLaboratorioModal
           onClose={(msg, type) => {
             setShowLabModal(false)
-            if (msg) showToast(msg, type)
+            if (typeof msg === 'string' && msg) showToast(msg, type)
             router.refresh()
           }}
         />
@@ -426,7 +426,7 @@ export default function LaboratoriosDashboard({ initialData }) {
           usuarios={usuarios}
           onClose={(msg, type) => {
             setShowReservaModal(false)
-            if (msg) showToast(msg, type)
+            if (typeof msg === 'string' && msg) showToast(msg, type)
             router.refresh()
           }}
         />
@@ -437,7 +437,7 @@ export default function LaboratoriosDashboard({ initialData }) {
           usuarios={usuarios}
           onClose={(msg, type) => {
             setShowPagoModal(false)
-            if (msg) showToast(msg, type)
+            if (typeof msg === 'string' && msg) showToast(msg, type)
             router.refresh()
           }}
         />

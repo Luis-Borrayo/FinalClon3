@@ -382,7 +382,7 @@ export default function LaboratorioDetail({ laboratorio: lab, usuarios }) {
           laboratorioIdDefault={lab.id}
           onClose={(msg, type) => {
             setShowReserva(false)
-            if (msg) showToast(msg, type)
+            if (typeof msg === 'string' && msg) showToast(msg, type)
             router.refresh()
           }}
         />

@@ -15,6 +15,8 @@ export default function NuevoPagoModal({ laboratorios, usuarios, onClose = () =>
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const dismiss = () => onClose()
+
   async function handleSubmit(formData) {
     setLoading(true)
     setError('')
@@ -28,7 +30,7 @@ export default function NuevoPagoModal({ laboratorios, usuarios, onClose = () =>
   }
 
   return (
-    <div className="lab-modal-overlay" onClick={onClose}>
+    <div className="lab-modal-overlay" onClick={dismiss}>
       <div className="lab-modal" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-xl font-semibold mb-4">Registrar cobro</h3>
         {error && <div className="mb-3 p-3 text-sm text-red-400 border border-red-500/30 rounded-lg">{error}</div>}
@@ -84,7 +86,7 @@ export default function NuevoPagoModal({ laboratorios, usuarios, onClose = () =>
           </div>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="lab-btn-ghost">Cancelar</button>
+            <button type="button" onClick={dismiss} className="lab-btn-ghost">Cancelar</button>
             <button type="submit" className="lab-btn-primary" disabled={loading}>
               {loading ? 'Guardando...' : 'Registrar'}
             </button>

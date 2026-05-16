@@ -54,6 +54,18 @@ body:not(.dark-mode) .uspg-sidebar {
   background: transparent !important;
 }
 
+body:not(.dark-mode) #left-sidebar.uspg-sidebar .brand-name.uspg-sidebar__brand,
+body:not(.dark-mode) .uspg-sidebar__brand {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.dark-mode #left-sidebar.uspg-sidebar .brand-name.uspg-sidebar__brand,
+.dark-mode .uspg-sidebar__brand {
+  background: #1a1a2e !important;
+  background-color: #1a1a2e !important;
+}
+
 .uspg-sidebar__logo {
   max-width: 160px;
   height: auto;
@@ -475,7 +487,8 @@ body:not(.dark-mode) .dashboard-card .module-subtitle {
 }
 
 body:not(.dark-mode) #left-sidebar .brand-name {
-  background: #f4f7f6 !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
 }
 
 /* ── Títulos de Tarjetas Institucionales (Para páginas internas) ── */

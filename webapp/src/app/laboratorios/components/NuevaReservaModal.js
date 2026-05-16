@@ -6,6 +6,8 @@ import { crearReserva } from '../actions'
 export default function NuevaReservaModal({ laboratorios, usuarios, onClose = () => {}, laboratorioIdDefault }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const dismiss = () => onClose()
   const [labId, setLabId] = useState(laboratorioIdDefault || laboratorios[0]?.id || '')
 
   const lab = laboratorios.find((l) => l.id === Number(labId))
@@ -24,7 +26,7 @@ export default function NuevaReservaModal({ laboratorios, usuarios, onClose = ()
   }
 
   return (
-    <div className="lab-modal-overlay" onClick={onClose}>
+    <div className="lab-modal-overlay" onClick={dismiss}>
       <div className="lab-modal" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-xl font-semibold mb-4">Nueva reservación</h3>
         {error && <div className="mb-3 p-3 text-sm text-red-400 border border-red-500/30 rounded-lg">{error}</div>}
@@ -95,7 +97,7 @@ export default function NuevaReservaModal({ laboratorios, usuarios, onClose = ()
           </p>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="lab-btn-ghost">Cancelar</button>
+            <button type="button" onClick={dismiss} className="lab-btn-ghost">Cancelar</button>
             <button type="submit" className="lab-btn-primary" disabled={loading}>
               {loading ? 'Enviando...' : 'Solicitar'}
             </button>

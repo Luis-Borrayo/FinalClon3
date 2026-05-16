@@ -6,6 +6,8 @@ export default function RechazarReservaModal({ reserva, onConfirm, onClose }) {
   const [motivo, setMotivo] = useState('')
   const [loading, setLoading] = useState(false)
 
+  const dismiss = () => onClose()
+
   async function handleSubmit(e) {
     e.preventDefault()
     setLoading(true)
@@ -14,7 +16,7 @@ export default function RechazarReservaModal({ reserva, onConfirm, onClose }) {
   }
 
   return (
-    <div className="lab-modal-overlay" onClick={onClose} role="presentation">
+    <div className="lab-modal-overlay" onClick={dismiss} role="presentation">
       <div
         className="lab-modal"
         role="dialog"
@@ -45,7 +47,7 @@ export default function RechazarReservaModal({ reserva, onConfirm, onClose }) {
             />
           </div>
           <div className="flex justify-end gap-2">
-            <button type="button" className="lab-btn-ghost" onClick={onClose} disabled={loading}>
+            <button type="button" className="lab-btn-ghost" onClick={dismiss} disabled={loading}>
               Cancelar
             </button>
             <button type="submit" className="lab-btn-primary lab-btn-danger" disabled={loading}>

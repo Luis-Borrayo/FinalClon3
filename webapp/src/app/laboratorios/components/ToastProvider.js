@@ -8,6 +8,7 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
   const showToast = useCallback((message, type = 'success') => {
+    if (typeof message !== 'string' || !message.trim()) return
     const id = crypto.randomUUID()
     setToasts((prev) => [...prev, { id, message, type }])
     setTimeout(() => {

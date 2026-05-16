@@ -14,6 +14,8 @@ export default function NuevoLaboratorioModal({ onClose = () => {} }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const dismiss = () => onClose()
+
   async function handleSubmit(formData) {
     setLoading(true)
     setError('')
@@ -27,7 +29,7 @@ export default function NuevoLaboratorioModal({ onClose = () => {} }) {
   }
 
   return (
-    <div className="lab-modal-overlay" onClick={onClose}>
+    <div className="lab-modal-overlay" onClick={dismiss}>
       <div className="lab-modal" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-5">
           <h3 className="text-xl font-semibold m-0 flex items-center gap-2">
@@ -36,7 +38,7 @@ export default function NuevoLaboratorioModal({ onClose = () => {} }) {
             </span>
             Nuevo laboratorio
           </h3>
-          <button type="button" onClick={onClose} className="lab-btn-ghost py-1 px-2">
+          <button type="button" onClick={dismiss} className="lab-btn-ghost py-1 px-2">
             <i className="fa fa-times" />
           </button>
         </div>
@@ -95,7 +97,7 @@ export default function NuevoLaboratorioModal({ onClose = () => {} }) {
           </label>
 
           <div className="flex justify-end gap-2 pt-2">
-            <button type="button" onClick={onClose} className="lab-btn-ghost" disabled={loading}>
+            <button type="button" onClick={dismiss} className="lab-btn-ghost" disabled={loading}>
               Cancelar
             </button>
             <button type="submit" className="lab-btn-primary" disabled={loading}>
