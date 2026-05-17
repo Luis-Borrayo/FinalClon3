@@ -4,8 +4,8 @@ import QRCode from "qrcode";
 
 
 export async function POST(request) {
-  const resend = new Resend(process.env.RESEND_API_KEY);
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const { email, reservation, qrImageBase64, userQrCode } = await request.json();
 
     if (!email || !reservation) {
