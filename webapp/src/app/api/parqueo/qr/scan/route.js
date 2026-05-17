@@ -163,9 +163,15 @@ export async function POST(request) {
     });
 
     // Segunda pasada: visitante ya ingresó → registrar salida
-    if (visitorQr?.is_used && visitorQr.session_id) {
+    if (visitorQr?.is_used) {
+      // Buscar sesión activa por session_id o por placa del vehículo (fallback)
       const activeSession = await prisma.parkingSession.findFirst({
-        where: { id: visitorQr.session_id, status: 'ACTIVE' },
+        where: {
+          status: 'ACTIVE',
+          ...(visitorQr.session_id
+            ? { id: visitorQr.session_id }
+            : { vehicle: { placa: visitorQr.vehicle_plate } }),
+        },
         include: { space: true },
       });
       if (activeSession) {

@@ -28,7 +28,7 @@ export async function GET(request) {
         orderBy: { entry_time: 'desc' },
       }),
     ]);
-    return res.ok({ total, page, limit, data: sessions });
+    return res.ok({ total, page, limit, sessions });
   } catch (e) {
     return res.error(e.message);
   }

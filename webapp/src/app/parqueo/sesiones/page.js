@@ -11,6 +11,9 @@ const dur = (entry) => {
   return mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
 };
 
+const dur2 = (mins) =>
+  mins == null ? "—" : mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
+
 const monto = (entry, rate = 5) => {
   const mins = Math.floor((Date.now() - new Date(entry).getTime()) / 60000);
   return ((mins / 60) * rate).toFixed(2);
@@ -184,6 +187,12 @@ export default function SesionesActivas() {
   const [salida, setSalida]       = useState(null);
   const [lastUpdate, setLastUpdate] = useState(null);
 
+  const [history,      setHistory]      = useState([]);
+  const [historyLoad,  setHistoryLoad]  = useState(false);
+  const [historyPage,  setHistoryPage]  = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const HIST_LIMIT = 10;
+
   // Filtros
   const [filterZone,   setFilterZone]   = useState("ALL");
   const [filterMethod, setFilterMethod] = useState("ALL");
@@ -208,7 +217,23 @@ export default function SesionesActivas() {
     return () => clearInterval(t);
   }, [load]);
 
-  const handleSalidaDone = () => { setSalida(null); load(); };
+  const loadHistory = useCallback(async (page = 1) => {
+    setHistoryLoad(true);
+    try {
+      const res = await api.get(`/sessions/history?page=${page}&limit=${HIST_LIMIT}`);
+      setHistory(res.data.data?.sessions || []);
+      setHistoryTotal(res.data.data?.total || 0);
+      setHistoryPage(page);
+    } catch (e) {
+      console.error("Error cargando historial:", e);
+    } finally {
+      setHistoryLoad(false);
+    }
+  }, []);
+
+  useEffect(() => { loadHistory(1); }, [loadHistory]);
+
+  const handleSalidaDone = () => { setSalida(null); load(); loadHistory(1); };
 
   // Filtrado
   const filtered = sessions.filter(s => {
@@ -423,6 +448,114 @@ export default function SesionesActivas() {
               <div className="card-footer" style={{ fontSize: 12, color: "#7d8490", padding: "0.65rem 1.25rem" }}>
                 Mostrando {filtered.length} de {sessions.length} sesiones ·
                 Monto total estimado: <strong style={{ color: "#21ba45" }}>Q {totalMonto.toFixed(2)}</strong>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Historial de sesiones completadas ─────────────────────────────── */}
+      <div className="row clearfix" style={{ marginTop: 8 }}>
+        <div className="col-12">
+          <div className="card">
+            <div className="card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 className="card-title">
+                <i className="fa fa-history" style={{ marginRight: 8, color: "#800020" }} />
+                Historial de sesiones
+              </h3>
+              <button className="btn btn-outline btn-sm"
+                style={{ borderColor: "#800020", color: "#800020" }}
+                onClick={() => loadHistory(historyPage)}>
+                <i className="fa fa-refresh" style={{ marginRight: 4 }} />Actualizar
+              </button>
+            </div>
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                <table className="table table-hover table-striped mb-0">
+                  <thead>
+                    <tr style={{ background: "rgba(128,0,32,0.08)" }}>
+                      <th>Placa</th>
+                      <th>Propietario</th>
+                      <th>Zona</th>
+                      <th>Espacio</th>
+                      <th>Entrada</th>
+                      <th>Salida</th>
+                      <th>Duración</th>
+                      <th>Monto</th>
+                      <th>Método</th>
+                      <th>Pago</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historyLoad ? (
+                      <tr>
+                        <td colSpan={10} className="text-center" style={{ padding: "2rem", color: "#7d8490" }}>
+                          <i className="fa fa-spinner fa-spin" style={{ marginRight: 8 }} />Cargando historial...
+                        </td>
+                      </tr>
+                    ) : history.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} className="text-center" style={{ padding: "2.5rem", color: "#7d8490" }}>
+                          <i className="fa fa-history fa-2x" style={{ display: "block", marginBottom: 8, color: "#343a40" }} />
+                          Sin sesiones completadas
+                        </td>
+                      </tr>
+                    ) : history.map(s => (
+                      <tr key={s.id}>
+                        <td><strong style={{ color: "#800020" }}>{s.vehicle?.placa || "—"}</strong></td>
+                        <td style={{ fontSize: 13 }}>
+                          {s.user
+                            ? `${s.user.first_name} ${s.user.last_name}`
+                            : s.notes?.startsWith("Visitante:")
+                              ? s.notes.replace("Visitante:", "").trim()
+                              : "—"}
+                        </td>
+                        <td><span className="badge badge-default">Zona {s.space?.zone || "—"}</span></td>
+                        <td>
+                          <span className="badge" style={{ background: "rgba(128,0,32,0.15)", color: "#800020" }}>
+                            {s.space?.code || "—"}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 12 }}>{fmt(s.entry_time)}</td>
+                        <td style={{ fontSize: 12 }}>
+                          {s.exit_time
+                            ? <span style={{ color: "#21ba45" }}>{fmt(s.exit_time)}</span>
+                            : <span style={{ color: "#7d8490" }}>—</span>}
+                        </td>
+                        <td style={{ fontSize: 12 }}>
+                          {s.duration_minutes != null
+                            ? <strong style={{ color: "#17a2b8" }}>{dur2(s.duration_minutes)}</strong>
+                            : "—"}
+                        </td>
+                        <td style={{ fontWeight: 700, color: s.amount_due === 0 ? "#21ba45" : "#fbbd08" }}>
+                          Q {(s.amount_due ?? 0).toFixed(2)}
+                        </td>
+                        <td><MetodoBadge method={s.entry_method} /></td>
+                        <td><PagoBadge paid={s.is_paid} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {historyTotal > HIST_LIMIT && (
+              <div className="card-footer" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 12, color: "#7d8490" }}>
+                <span>Mostrando {history.length} de {historyTotal} sesiones</span>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn btn-sm btn-outline"
+                    style={{ borderColor: "#dee2e6" }}
+                    disabled={historyPage <= 1}
+                    onClick={() => loadHistory(historyPage - 1)}>
+                    <i className="fa fa-chevron-left" />
+                  </button>
+                  <span style={{ padding: "4px 8px" }}>Pág. {historyPage}</span>
+                  <button className="btn btn-sm btn-outline"
+                    style={{ borderColor: "#dee2e6" }}
+                    disabled={historyPage * HIST_LIMIT >= historyTotal}
+                    onClick={() => loadHistory(historyPage + 1)}>
+                    <i className="fa fa-chevron-right" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
