@@ -172,8 +172,9 @@ export default function TarifasPage() {
             zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center"
           }}>
             <div style={{
-              background: "#fff", borderRadius: 8, width: "100%", maxWidth: 440,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.18)", overflow: "hidden"
+              background: "#1e252b", borderRadius: 8, width: "100%", maxWidth: 440,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)", overflow: "hidden",
+              color: "#e0e0e0",
             }}>
               {/* Header modal */}
               <div style={{ background: "#800020", color: "#fff", padding: "14px 20px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -189,7 +190,7 @@ export default function TarifasPage() {
               <div style={{ padding: 24 }}>
                 {/* Checkbox gratis */}
                 <div style={{ marginBottom: 18 }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontWeight: 600 }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontWeight: 600, color: "#e0e0e0" }}>
                     <input
                       type="checkbox"
                       checked={editing.is_free}
@@ -198,7 +199,7 @@ export default function TarifasPage() {
                     />
                     Acceso gratuito (no cobrar)
                   </label>
-                  <small style={{ color: "#888", marginLeft: 26 }}>
+                  <small style={{ color: "#9e9e9e", marginLeft: 26 }}>
                     Si está marcado, este rol no paga tarifa
                   </small>
                 </div>
@@ -206,11 +207,11 @@ export default function TarifasPage() {
                 {/* Tarifa por hora */}
                 {!editing.is_free && (
                   <div style={{ marginBottom: 18 }}>
-                    <label style={{ display: "block", fontWeight: 600, marginBottom: 6 }}>
+                    <label style={{ display: "block", fontWeight: 600, marginBottom: 6, color: "#e0e0e0" }}>
                       Tarifa por hora (Q)
                     </label>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontWeight: 700, fontSize: 16 }}>Q</span>
+                      <span style={{ fontWeight: 700, fontSize: 16, color: "#e0e0e0" }}>Q</span>
                       <input
                         type="number"
                         min="0"
@@ -218,17 +219,17 @@ export default function TarifasPage() {
                         value={editing.hourly_rate}
                         onChange={e => setEditing(prev => ({ ...prev, hourly_rate: parseFloat(e.target.value) || 0 }))}
                         className="form-control"
-                        style={{ maxWidth: 120 }}
+                        style={{ maxWidth: 120, background: "#2a333d", color: "#e0e0e0", border: "1px solid #444" }}
                       />
-                      <span style={{ color: "#888", fontSize: 13 }}>por hora</span>
+                      <span style={{ color: "#9e9e9e", fontSize: 13 }}>por hora</span>
                     </div>
                   </div>
                 )}
 
                 {/* Horas gratis máximas (solo TEACHER) */}
                 {editing.role === "TEACHER" && editing.is_free && (
-                  <div style={{ marginBottom: 18, background: "#f0f7f0", padding: 14, borderRadius: 6, border: "1px solid #c3e6c3" }}>
-                    <label style={{ display: "block", fontWeight: 600, marginBottom: 6, color: "#1a6e3c" }}>
+                  <div style={{ marginBottom: 18, background: "rgba(26,110,60,0.15)", padding: 14, borderRadius: 6, border: "1px solid rgba(26,110,60,0.4)" }}>
+                    <label style={{ display: "block", fontWeight: 600, marginBottom: 6, color: "#4caf50" }}>
                       <i className="fa fa-clock-o" style={{ marginRight: 6 }} />
                       Límite de horas gratuitas
                     </label>
@@ -241,11 +242,11 @@ export default function TarifasPage() {
                         onChange={e => setEditing(prev => ({ ...prev, max_free_hours: parseInt(e.target.value) || null }))}
                         className="form-control"
                         placeholder="Sin límite"
-                        style={{ maxWidth: 100 }}
+                        style={{ maxWidth: 100, background: "#2a333d", color: "#e0e0e0", border: "1px solid #444" }}
                       />
-                      <span style={{ color: "#555", fontSize: 13 }}>horas gratis por sesión</span>
+                      <span style={{ color: "#9e9e9e", fontSize: 13 }}>horas gratis por sesión</span>
                     </div>
-                    <small style={{ color: "#555", marginTop: 4, display: "block" }}>
+                    <small style={{ color: "#9e9e9e", marginTop: 4, display: "block" }}>
                       Pasado este límite se cobra la tarifa de Estudiante por el tiempo excedido.
                       Dejar vacío para sin límite.
                     </small>
@@ -253,29 +254,30 @@ export default function TarifasPage() {
                 )}
 
                 {/* Previsualización */}
-                <div style={{ background: "#f8f8f8", borderRadius: 6, padding: 12, marginBottom: 20, border: "1px solid #eee" }}>
-                  <strong style={{ fontSize: 12, color: "#666", display: "block", marginBottom: 6 }}>EJEMPLO DE COBRO</strong>
+                <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 6, padding: 12, marginBottom: 20, border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <strong style={{ fontSize: 12, color: "#9e9e9e", display: "block", marginBottom: 6 }}>EJEMPLO DE COBRO</strong>
                   {editing.is_free && !editing.max_free_hours && (
-                    <span style={{ color: "#1a6e3c" }}>2 horas → <strong>Q 0.00</strong> (gratis)</span>
+                    <span style={{ color: "#4caf50" }}>2 horas → <strong>Q 0.00</strong> (gratis)</span>
                   )}
                   {editing.is_free && editing.max_free_hours && (
                     <>
-                      <div style={{ color: "#1a6e3c" }}>
+                      <div style={{ color: "#4caf50" }}>
                         {editing.max_free_hours} horas → <strong>Q 0.00</strong> (dentro del límite)
                       </div>
-                      <div style={{ color: "#800020", marginTop: 4 }}>
+                      <div style={{ color: "#ef9a9a", marginTop: 4 }}>
                         {editing.max_free_hours + 2} horas → <strong>Q {(2 * 5).toFixed(2)}</strong> (2h excedente × Q5.00 tarifa estudiante)
                       </div>
                     </>
                   )}
                   {!editing.is_free && (
-                    <span>2 horas → <strong>Q {(2 * (editing.hourly_rate || 0)).toFixed(2)}</strong></span>
+                    <span style={{ color: "#e0e0e0" }}>2 horas → <strong>Q {(2 * (editing.hourly_rate || 0)).toFixed(2)}</strong></span>
                   )}
                 </div>
 
                 {/* Botones */}
                 <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-                  <button className="btn btn-default" onClick={cancelEdit} disabled={saving}>
+                  <button className="btn btn-default" onClick={cancelEdit} disabled={saving}
+                    style={{ background: "#2a333d", color: "#e0e0e0", border: "1px solid #555" }}>
                     Cancelar
                   </button>
                   <button className="btn btn-success" onClick={saveEdit} disabled={saving}

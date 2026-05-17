@@ -485,6 +485,7 @@ export default function MapaParqueo() {
   const [assigning, setAssigning]   = useState(null);
   const [loading, setLoading]       = useState(true);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [countdown, setCountdown]   = useState(20);
 
   const load = useCallback(async () => {
     try {
@@ -510,6 +511,7 @@ export default function MapaParqueo() {
       setSpaces(grouped);
       setZoneStats(statusRes.data.data?.by_zone || {});
       setLastUpdate(new Date());
+      setCountdown(20);
     } catch (e) {
       console.error("Error cargando mapa:", e);
     } finally {
@@ -522,6 +524,11 @@ export default function MapaParqueo() {
     const t = setInterval(load, 20000);
     return () => clearInterval(t);
   }, [load]);
+
+  useEffect(() => {
+    const t = setInterval(() => setCountdown(c => (c > 0 ? c - 1 : 0)), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const handleSpaceClick = (sp) => setSelected(sp);
   const handleAssignClick = (sp) => { setSelected(null); setAssigning(sp); };
@@ -614,10 +621,22 @@ export default function MapaParqueo() {
           </div>
 
           {lastUpdate && (
-            <p style={{ fontSize: 11, color: "#7d8490", textAlign: "center", marginTop: 8 }}>
-              <i className="fa fa-refresh" style={{ marginRight: 4 }} />
-              Actualizado {lastUpdate.toLocaleTimeString("es-GT")}
-            </p>
+            <div style={{ textAlign: "center", marginTop: 8 }}>
+              <p style={{ fontSize: 11, color: "#7d8490", marginBottom: 4 }}>
+                <i className="fa fa-refresh" style={{ marginRight: 4 }} />
+                Actualizado {lastUpdate.toLocaleTimeString("es-GT")}
+              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "center" }}>
+                <div style={{ flex: 1, maxWidth: 100, background: "rgba(255,255,255,0.08)", borderRadius: 4, height: 4, overflow: "hidden" }}>
+                  <div style={{
+                    width: `${(countdown / 20) * 100}%`, height: "100%", borderRadius: 4,
+                    background: countdown <= 5 ? "#db2828" : countdown <= 10 ? "#fbbd08" : "#21ba45",
+                    transition: "width 1s linear, background 0.3s",
+                  }} />
+                </div>
+                <span style={{ fontSize: 10, color: "#7d8490" }}>{countdown}s</span>
+              </div>
+            </div>
           )}
         </div>
 

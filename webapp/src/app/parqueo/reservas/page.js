@@ -161,6 +161,15 @@ function NewReservaModal({ onClose, onDone }) {
     if (new Date(form.end_time) <= new Date(form.start_time)) {
       setError("La hora de fin debe ser posterior al inicio."); return;
     }
+    // Validación de conflictos: espacios RESERVED o OCCUPIED no disponibles
+    const conflicting = form.selected_codes.filter(code => {
+      const sp = allSpaces.find(s => s.code === code);
+      return sp && (sp.status === "OCCUPIED" || sp.status === "RESERVED" || sp.status === "MAINTENANCE");
+    });
+    if (conflicting.length > 0) {
+      setError(`Los siguientes espacios no están disponibles: ${conflicting.join(", ")}. Por favor selecciona otros.`);
+      return;
+    }
     setLoading(true); setError("");
     try {
       const selected = allSpaces.filter(s => form.selected_codes.includes(s.code)
@@ -296,7 +305,7 @@ function NewReservaModal({ onClose, onDone }) {
 }
 
 // ── Modal: Enviar QR por correo ───────────────────────────────────────────────
-function SendQRModal({ reservation, onClose }) {
+function SendQRModal({ reservation, onClose, onSent }) {
   const [email,   setEmail]   = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -334,6 +343,7 @@ function SendQRModal({ reservation, onClose }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al enviar.");
       setSuccess(true);
+      onSent?.(reservation.id);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -625,6 +635,7 @@ export default function Reservas() {
   const [showBatch,      setShowBatch]      = useState(false);
   const [showBatchCancel,setShowBatchCancel]= useState(false);
   const [batchCancelling,setBatchCancelling]= useState(false);
+  const [sentQrIds,      setSentQrIds]      = useState(new Set());
   const [filterZone,   setFilterZone]   = useState("ALL");
   const [filterType,   setFilterType]   = useState("ALL");
   const [filterStatus, setFilterStatus] = useState("CONFIRMED");
@@ -907,13 +918,18 @@ export default function Reservas() {
                             </td>
                             <td><StatusBadge status={r.status} /></td>
                             <td style={{ textAlign:"center" }}>
-                              <div style={{ display:"flex", gap:4, justifyContent:"center" }}>
+                              <div style={{ display:"flex", gap:4, justifyContent:"center", alignItems:"center" }}>
                                 {(r.status === "CONFIRMED" || r.status === "PENDING") && (
                                   <button className="btn btn-info btn-sm"
                                     title="Enviar QR por correo"
                                     onClick={() => setQrTarget(r)}>
                                     <i className="fa fa-qrcode" />
                                   </button>
+                                )}
+                                {sentQrIds.has(r.id) && (
+                                  <span title="QR enviado" style={{ color:"#21ba45", fontSize:16, lineHeight:1 }}>
+                                    <i className="fa fa-check-circle" />
+                                  </span>
                                 )}
                                 {(r.status === "CONFIRMED" || r.status === "PENDING") && (
                                   <button className="btn btn-danger btn-sm"
@@ -1030,7 +1046,7 @@ export default function Reservas() {
       {/* ── Modals ────────────────────────────────────────────────────────────── */}
       {showNew      && <NewReservaModal  onClose={() => setShowNew(false)}      onDone={handleDone} />}
       {cancelTarget && <CancelModal      reservation={cancelTarget} onClose={() => setCancelTarget(null)} onDone={handleDone} />}
-      {qrTarget     && <SendQRModal      reservation={qrTarget}     onClose={() => setQrTarget(null)} />}
+      {qrTarget     && <SendQRModal      reservation={qrTarget}     onClose={() => setQrTarget(null)} onSent={id => setSentQrIds(prev => new Set([...prev, id]))} />}
       {showBatch    && <SendBatchModal   reservations={selectedReservations} onClose={() => setShowBatch(false)} />}
     </>
   );
