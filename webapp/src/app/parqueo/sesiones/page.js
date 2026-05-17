@@ -219,7 +219,9 @@ export default function SesionesActivas() {
     if (search) {
       const q = search.toUpperCase();
       const plate = (s.vehicle?.placa || "").toUpperCase();
-      const name  = `${s.user?.first_name || ""} ${s.user?.last_name || ""}`.toUpperCase();
+      const name  = s.user
+        ? `${s.user.first_name || ""} ${s.user.last_name || ""}`.toUpperCase()
+        : (s.notes?.startsWith("Visitante:") ? s.notes.replace("Visitante:", "").trim().toUpperCase() : "");
       if (!plate.includes(q) && !name.includes(q)) return false;
     }
     return true;
@@ -370,7 +372,11 @@ export default function SesionesActivas() {
                             )}
                           </td>
                           <td style={{ fontSize: 13 }}>
-                            {s.user ? `${s.user.first_name} ${s.user.last_name}` : "—"}
+                            {s.user
+                              ? `${s.user.first_name} ${s.user.last_name}`
+                              : s.notes?.startsWith("Visitante:")
+                                ? s.notes.replace("Visitante:", "").trim()
+                                : "—"}
                           </td>
                           <td>
                             <span className="badge badge-default">Zona {s.space?.zone || "—"}</span>
