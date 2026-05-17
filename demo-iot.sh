@@ -50,11 +50,11 @@ sensor_anim() {
   echo -e "  ${BOLD}Espacio:${RESET}  ${CYAN}$space${RESET}"
   echo -e "  ${BOLD}Sensor:${RESET}   [TRIG]━━━━━━━━━━━━━━━━━━━━━━━━[ECHO]"
   echo -ne "  ${BOLD}Midiendo${RESET}  "
-  for i in 1 2 3; do sleep 0.3; echo -ne "▓"; done
+  for i in 1 2 3; do sleep 0.15; echo -ne "▓"; done
   echo -e "  ${BOLD}${dist_label}${RESET}"
   echo -e "  ${BOLD}Estado:${RESET}   $icon  ${color}${status}${RESET}"
   echo -ne "  ${BOLD}Enviando al servidor${RESET}  "
-  for i in 1 2 3; do sleep 0.2; echo -ne "."; done
+  for i in 1 2 3; do sleep 0.1; echo -ne "."; done
   local r=$(send "$space" "$status")
   if [ "$r" == "OK" ]; then
     echo -e "  ${GREEN}✓ HTTP 200 — Mapa actualizado${RESET}"
@@ -94,20 +94,20 @@ demo_auto() {
     echo -e "  ${YELLOW}▶ Vehículo detectado — Zona ${LABELS[$space]} (espacio $space)${RESET}\n"
     sensor_anim "$space" "OCCUPIED"
     echo -e "  ${DIM}Ver cambio en → http://localhost:3000/parqueo/mapa${RESET}"
-    sleep 3
+    sleep 1.5
   done
 
-  sleep 2
+  sleep 1
 
   for space in "A-002" "A-130" "B-001" "B-130"; do
     header
     echo -e "  ${YELLOW}▶ Vehículo salió — Zona ${LABELS[$space]} (espacio $space)${RESET}\n"
     sensor_anim "$space" "AVAILABLE"
-    sleep 2
+    sleep 1
   done
 
   echo -e "\n  ${GREEN}✓ Demo completa. El mapa refleja los cambios en tiempo real.${RESET}\n"
-  sleep 2
+  sleep 1
 }
 
 # ── Main loop ─────────────────────────────────────────────────────────────────
