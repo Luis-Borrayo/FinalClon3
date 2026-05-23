@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
@@ -105,16 +106,16 @@ model Usuario {
   sancionado       Boolean          @default(false)
   eventoExternoRef String?          @map("evento_externo_ref")
 
-  reservas              Reserva[]              @relation("ReservaSolicitante")
-  reservasAprobadas     Reserva[]              @relation("ReservaAprobador")
-  sesionesUso           SesionUso[]
-  pagos                 Pago[]
-  sanciones             Sancion[]
+  reservas               Reserva[]              @relation("ReservaSolicitante")
+  reservasAprobadas      Reserva[]              @relation("ReservaAprobador")
+  sesionesUso            SesionUso[]
+  pagos                  Pago[]
+  sanciones              Sancion[]
   aceptacionesReglamento ReglamentoAceptacion[]
-  reportesDano          ReporteDano[]          @relation("ReportePor")
-  danosResponsable      ReporteDano[]          @relation("DanoResponsable")
-  infracciones          Infraccion[]
-  mantenimientos        MantenimientoEquipo[]  @relation("MantenimientoTecnico")
+  reportesDano           ReporteDano[]          @relation("ReportePor")
+  danosResponsable       ReporteDano[]          @relation("DanoResponsable")
+  infracciones           Infraccion[]
+  mantenimientos         MantenimientoEquipo[]  @relation("MantenimientoTecnico")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -123,11 +124,11 @@ model Usuario {
 }
 
 model Reglamento {
-  id          Int      @id @default(autoincrement())
-  version     String   @unique
-  titulo      String
-  contenido   String   @db.Text
-  activo      Boolean  @default(true)
+  id           Int      @id @default(autoincrement())
+  version      String   @unique
+  titulo       String
+  contenido    String   @db.Text
+  activo       Boolean  @default(true)
   vigenteDesde DateTime @default(now()) @map("vigente_desde")
 
   aceptaciones ReglamentoAceptacion[]
@@ -151,15 +152,15 @@ model ReglamentoAceptacion {
 }
 
 model Sancion {
-  id           Int         @id @default(autoincrement())
-  usuarioId    String      @map("usuario_id")
-  tipo         TipoSancion
-  motivo       String
-  aplicadaPorId String?    @map("aplicada_por_id")
-  fechaInicio  DateTime    @default(now()) @map("fecha_inicio")
-  fechaFin     DateTime?   @map("fecha_fin")
-  levantada    Boolean     @default(false)
-  notas        String?
+  id            Int         @id @default(autoincrement())
+  usuarioId     String      @map("usuario_id")
+  tipo          TipoSancion
+  motivo        String
+  aplicadaPorId String?     @map("aplicada_por_id")
+  fechaInicio   DateTime    @default(now()) @map("fecha_inicio")
+  fechaFin      DateTime?   @map("fecha_fin")
+  levantada     Boolean     @default(false)
+  notas         String?
 
   usuario Usuario @relation(fields: [usuarioId], references: [id])
 
@@ -197,13 +198,13 @@ model Laboratorio {
 }
 
 model ConfiguracionDivision {
-  id             Int     @id @default(autoincrement())
-  laboratorioId  Int     @map("laboratorio_id")
-  etiqueta       String
-  cupo           Int
+  id              Int     @id @default(autoincrement())
+  laboratorioId   Int     @map("laboratorio_id")
+  etiqueta        String
+  cupo            Int
   esGrupoCompleto Boolean @default(false) @map("es_grupo_completo")
-  activo         Boolean @default(true)
-  orden          Int     @default(0)
+  activo          Boolean @default(true)
+  orden           Int     @default(0)
 
   laboratorio Laboratorio @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
   reservas    Reserva[]
@@ -212,12 +213,12 @@ model ConfiguracionDivision {
 }
 
 model Estacion {
-  id            Int    @id @default(autoincrement())
-  laboratorioId Int    @map("laboratorio_id")
+  id            Int     @id @default(autoincrement())
+  laboratorioId Int     @map("laboratorio_id")
   nombre        String
   tipo          String
   descripcion   String?
-  orden         Int    @default(0)
+  orden         Int     @default(0)
   activo        Boolean @default(true)
 
   laboratorio Laboratorio @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
@@ -268,7 +269,7 @@ model MantenimientoEquipo {
 model ReporteDano {
   id                   Int               @id @default(autoincrement())
   equipoId             Int               @map("equipo_id")
-  reportadoPorId         String            @map("reportado_por_id")
+  reportadoPorId       String            @map("reportado_por_id")
   usuarioResponsableId String?           @map("usuario_responsable_id")
   descripcion          String
   requiereCobro        Boolean           @default(false) @map("requiere_cobro")
@@ -349,19 +350,19 @@ model SesionUso {
   fin               DateTime?
   registroActividad Json?        @map("registro_actividad")
 
-  usuario     Usuario      @relation(fields: [usuarioId], references: [id])
-  laboratorio Laboratorio? @relation(fields: [laboratorioId], references: [id])
-  equipo      Equipo?      @relation(fields: [equipoId], references: [id])
+  usuario      Usuario      @relation(fields: [usuarioId], references: [id])
+  laboratorio  Laboratorio? @relation(fields: [laboratorioId], references: [id])
+  equipo       Equipo?      @relation(fields: [equipoId], references: [id])
   infracciones Infraccion[]
 
   @@map("sesion_uso")
 }
 
 model Infraccion {
-  id          Int      @id @default(autoincrement())
-  usuarioId   String   @map("usuario_id")
-  sesionUsoId String?  @map("sesion_uso_id")
-  descripcion String
+  id              Int     @id @default(autoincrement())
+  usuarioId       String  @map("usuario_id")
+  sesionUsoId     String? @map("sesion_uso_id")
+  descripcion     String
   sancionAplicada Boolean @default(false) @map("sancion_aplicada")
 
   usuario   Usuario    @relation(fields: [usuarioId], references: [id])
@@ -370,4 +371,107 @@ model Infraccion {
   createdAt DateTime @default(now()) @map("created_at")
 
   @@map("infraccion")
+}
+
+// ─── Sistema académico ────────────────────────────────────────────────────────
+
+model Carrera {
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique
+  nombre    String
+  facultad  String?
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  alumnos Alumno[]
+
+  @@map("carrera")
+}
+
+model Alumno {
+  id                  Int          @id @default(autoincrement())
+  carnet              String       @unique
+  nombre              String
+  apellido            String
+  email               String       @unique
+  correoInstitucional String?      @unique @map("correo_institucional")
+  carreraId           Int?         @map("carrera_id")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  asignaciones        Asignacion[]
+  asistencias         Asistencia[]
+
+  carrera Carrera? @relation(fields: [carreraId], references: [id])
+
+  @@map("alumno")
+}
+
+model CatedraticoAcademico {
+  id        Int       @id @default(autoincrement())
+  codigo    String    @unique
+  nombre    String
+  apellido  String
+  email     String    @unique
+  createdAt DateTime  @default(now()) @map("created_at")
+  horarios  Horario[]
+
+  @@map("catedratico_academico")
+}
+
+model Curso {
+  id           Int          @id @default(autoincrement())
+  codigo       String       @unique
+  nombre       String
+  creditos     Int
+  createdAt    DateTime     @default(now()) @map("created_at")
+  asignaciones Asignacion[]
+  horarios     Horario[]
+
+  @@map("curso")
+}
+
+model Asignacion {
+  id        Int      @id @default(autoincrement())
+  alumnoId  Int      @map("alumno_id")
+  cursoId   Int      @map("curso_id")
+  ciclo     String   // Ej: "2026-1"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  alumno Alumno @relation(fields: [alumnoId], references: [id])
+  curso  Curso  @relation(fields: [cursoId], references: [id])
+
+  @@unique([alumnoId, cursoId, ciclo])
+  @@map("asignacion")
+}
+
+model Horario {
+  id            Int      @id @default(autoincrement())
+  cursoId       Int      @map("curso_id")
+  catedraticoId Int      @map("catedratico_id")
+  dia           String   // Ej: "Lunes"
+  horaInicio    String   // Ej: "08:00"
+  horaFin       String   // Ej: "10:00"
+  salon         String
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  curso       Curso                @relation(fields: [cursoId], references: [id])
+  catedratico CatedraticoAcademico @relation(fields: [catedraticoId], references: [id])
+  asistencias Asistencia[]
+
+  @@map("horario")
+}
+
+model Asistencia {
+  id        Int      @id @default(autoincrement())
+  alumnoId  Int      @map("alumno_id")
+  horarioId Int      @map("horario_id")
+  fecha     DateTime
+  presente  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  alumno  Alumno  @relation(fields: [alumnoId], references: [id])
+  horario Horario @relation(fields: [horarioId], references: [id])
+
+  @@unique([alumnoId, horarioId, fecha])
+  @@map("asistencia")
 }
