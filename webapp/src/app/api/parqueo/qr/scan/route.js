@@ -103,8 +103,7 @@ export async function POST(request) {
           ]);
         }
 
-        // Anclar salida a blockchain de forma asíncrona (no bloquea la respuesta)
-        anclarAudit({
+        await anclarAudit({
           sessionId: activeSession.id,
           action: 'EXIT',
           data: { placa: vehicle.placa, duration_minutes, amount_due, is_paid, exit_time },
@@ -199,8 +198,7 @@ export async function POST(request) {
 
       const [session] = await prisma.$transaction(txOps);
 
-      // Anclar entrada a blockchain de forma asíncrona (no bloquea la respuesta)
-      anclarAudit({
+      await anclarAudit({
         sessionId: session.id,
         action: 'ENTRY',
         data: { placa: vehicle.placa, space_code: space.code, zone: space.zone, entry_time: session.entry_time },
