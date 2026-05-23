@@ -1,66 +1,410 @@
-// prisma/schema.prisma
-
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma"
+  provider   = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
+enum RolUsuario {
+  ADMINISTRADOR
+  TECNICO
+  CATEDRATICO
+  ESTUDIANTE
+}
+
+enum CategoriaUsuario {
+  ESTUDIANTE_UNIVERSITARIO
+  PERSONAL_COLEGIO
+  PERSONAL_IGLESIA
+  EVENTO_EXTERNO
+  CATEDRATICO
+}
+
+enum TipoLaboratorio {
+  COMPUTACION
+  PLC_CNC
+  QUIMICA
+  FISICA
+}
+
+enum EstadoLaboratorio {
+  ACTIVO
+  INACTIVO
+  MANTENIMIENTO
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  COMPLETADA
+  CANCELADA
+}
+
+enum TipoCobro {
+  CUOTA_SEMESTRAL
+  PAGO_HORA
+  PAGO_DIA
+  PAGO_SEMESTRE
+  RESERVACION_GRUPO
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+  ANULADO
+}
+
+enum EstadoEquipo {
+  OPERATIVO
+  MANTENIMIENTO
+  DANADO
+  BAJA
+}
+
+enum TipoConexion {
+  PRESENCIAL
+  REMOTA
+}
+
+enum TipoSancion {
+  AMONESTACION
+  SUSPENSION_TEMPORAL
+  EXPULSION
+}
+
+enum EstadoMantenimiento {
+  PROGRAMADO
+  EN_PROCESO
+  COMPLETADO
+}
+
+enum EstadoReporteDano {
+  REPORTADO
+  EN_REVISION
+  COBRADO
+  CERRADO
+}
+
+model Usuario {
+  id               String           @id @default(uuid())
+  correo           String           @unique
+  nombre           String
+  apellido         String?
+  rol              RolUsuario       @default(ESTUDIANTE)
+  categoria        CategoriaUsuario @default(ESTUDIANTE_UNIVERSITARIO)
+  carrera          String?
+  activo           Boolean          @default(true)
+  reglamentoAcep   Boolean          @default(false) @map("reglamento_acep")
+  sancionado       Boolean          @default(false)
+  eventoExternoRef String?          @map("evento_externo_ref")
+
+  reservas               Reserva[]              @relation("ReservaSolicitante")
+  reservasAprobadas      Reserva[]              @relation("ReservaAprobador")
+  sesionesUso            SesionUso[]
+  pagos                  Pago[]
+  sanciones              Sancion[]
+  aceptacionesReglamento ReglamentoAceptacion[]
+  reportesDano           ReporteDano[]          @relation("ReportePor")
+  danosResponsable       ReporteDano[]          @relation("DanoResponsable")
+  infracciones           Infraccion[]
+  mantenimientos         MantenimientoEquipo[]  @relation("MantenimientoTecnico")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("usuario")
+}
+
+model Reglamento {
+  id           Int                    @id @default(autoincrement())
+  version      String                 @unique
+  titulo       String
+  contenido    String                 @db.Text
+  activo       Boolean                @default(true)
+  vigenteDesde DateTime               @default(now()) @map("vigente_desde")
+  aceptaciones ReglamentoAceptacion[]
+  createdAt    DateTime               @default(now()) @map("created_at")
+
+  @@map("reglamento")
+}
+
+model ReglamentoAceptacion {
+  id           Int      @id @default(autoincrement())
+  usuarioId    String   @map("usuario_id")
+  reglamentoId Int      @map("reglamento_id")
+  aceptadoEn   DateTime @default(now()) @map("aceptado_en")
+
+  usuario    Usuario    @relation(fields: [usuarioId], references: [id])
+  reglamento Reglamento @relation(fields: [reglamentoId], references: [id])
+
+  @@unique([usuarioId, reglamentoId])
+  @@map("reglamento_aceptacion")
+}
+
+model Sancion {
+  id            Int         @id @default(autoincrement())
+  usuarioId     String      @map("usuario_id")
+  tipo          TipoSancion
+  motivo        String
+  aplicadaPorId String?     @map("aplicada_por_id")
+  fechaInicio   DateTime    @default(now()) @map("fecha_inicio")
+  fechaFin      DateTime?   @map("fecha_fin")
+  levantada     Boolean     @default(false)
+  notas         String?
+
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("sancion")
+}
+
+model Laboratorio {
+  id                 Int               @id @default(autoincrement())
+  codigo             String            @unique @default("LAB-GEN")
+  nombre             String
+  descripcion        String?
+  ubicacion          String?
+  tipo               TipoLaboratorio   @default(COMPUTACION)
+  capacidadTotal     Int               @default(30) @map("capacidad_total")
+  permiteDivision    Boolean           @default(true) @map("permite_division")
+  estado             EstadoLaboratorio @default(ACTIVO)
+  faseImplementacion Int               @default(1) @map("fase_implementacion")
+  disponiblePublico  Boolean           @default(true) @map("disponible_publico")
+
+  configuraciones ConfiguracionDivision[]
+  estaciones      Estacion[]
+  equipos         Equipo[]
+  reservas        Reserva[]
+  pagos           Pago[]
+  sesionesUso     SesionUso[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("laboratorio")
+}
+
+model ConfiguracionDivision {
+  id              Int     @id @default(autoincrement())
+  laboratorioId   Int     @map("laboratorio_id")
+  etiqueta        String
+  cupo            Int
+  esGrupoCompleto Boolean @default(false) @map("es_grupo_completo")
+  activo          Boolean @default(true)
+  orden           Int     @default(0)
+
+  laboratorio Laboratorio @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
+  reservas    Reserva[]
+
+  @@map("configuracion_division")
+}
+
+model Estacion {
+  id            Int     @id @default(autoincrement())
+  laboratorioId Int     @map("laboratorio_id")
+  nombre        String
+  tipo          String
+  descripcion   String?
+  orden         Int     @default(0)
+  activo        Boolean @default(true)
+
+  laboratorio Laboratorio @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
+
+  @@map("estacion")
+}
+
+model Equipo {
+  id               Int          @id @default(autoincrement())
+  laboratorioId    Int          @map("laboratorio_id")
+  codigoInventario String       @unique @map("codigo_inventario")
+  nombre           String
+  esServidor       Boolean      @default(false) @map("es_servidor")
+  estado           EstadoEquipo @default(OPERATIVO)
+  ubicacionFisica  String?      @map("ubicacion_fisica")
+
+  laboratorio    Laboratorio           @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
+  sesionesUso    SesionUso[]
+  reportesDano   ReporteDano[]
+  mantenimientos MantenimientoEquipo[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("equipo")
+}
+
+model MantenimientoEquipo {
+  id          Int                 @id @default(autoincrement())
+  equipoId    Int                 @map("equipo_id")
+  tecnicoId   String?             @map("tecnico_id")
+  tipo        String
+  descripcion String
+  costo       Decimal?            @db.Decimal(10, 2)
+  estado      EstadoMantenimiento @default(PROGRAMADO)
+  fecha       DateTime            @default(now())
+
+  equipo    Equipo   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  tecnico   Usuario? @relation("MantenimientoTecnico", fields: [tecnicoId], references: [id])
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("mantenimiento_equipo")
+}
+
+model ReporteDano {
+  id                   Int               @id @default(autoincrement())
+  equipoId             Int               @map("equipo_id")
+  reportadoPorId       String            @map("reportado_por_id")
+  usuarioResponsableId String?           @map("usuario_responsable_id")
+  descripcion          String
+  requiereCobro        Boolean           @default(false) @map("requiere_cobro")
+  montoCobro           Decimal?          @map("monto_cobro") @db.Decimal(10, 2)
+  estado               EstadoReporteDano @default(REPORTADO)
+
+  equipo             Equipo   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  reportadoPor       Usuario  @relation("ReportePor", fields: [reportadoPorId], references: [id])
+  usuarioResponsable Usuario? @relation("DanoResponsable", fields: [usuarioResponsableId], references: [id])
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@map("reporte_dano")
+}
+
+model Reserva {
+  id                      String        @id @default(uuid())
+  usuarioId               String        @map("usuario_id")
+  laboratorioId           Int           @map("laboratorio_id")
+  configuracionDivisionId Int?          @map("configuracion_division_id")
+  fechaInicio             DateTime      @map("fecha_inicio")
+  fechaFin                DateTime      @map("fecha_fin")
+  cantidadPersonas        Int           @map("cantidad_personas")
+  proposito               String
+  estado                  EstadoReserva @default(PENDIENTE)
+  aprobadaPorId           String?       @map("aprobada_por_id")
+  notas                   String?
+  motivoRechazo           String?       @map("motivo_rechazo")
+  motivoCancelacion       String?       @map("motivo_cancelacion")
+
+  usuario               Usuario                @relation("ReservaSolicitante", fields: [usuarioId], references: [id])
+  laboratorio           Laboratorio            @relation(fields: [laboratorioId], references: [id])
+  configuracionDivision ConfiguracionDivision? @relation(fields: [configuracionDivisionId], references: [id])
+  aprobadaPor           Usuario?               @relation("ReservaAprobador", fields: [aprobadaPorId], references: [id])
+  pagos                 Pago[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([laboratorioId, fechaInicio, fechaFin])
+  @@map("reserva")
+}
+
+model Pago {
+  id                String     @id @default(uuid())
+  usuarioId         String     @map("usuario_id")
+  laboratorioId     Int?       @map("laboratorio_id")
+  reservaId         String?    @map("reserva_id")
+  monto             Decimal    @db.Decimal(10, 2)
+  tipoCobro         TipoCobro  @map("tipo_cobro")
+  metodoPago        String     @map("metodo_pago")
+  estado            EstadoPago @default(PENDIENTE)
+  referenciaExterna String?    @map("referencia_externa")
+  notas             String?
+
+  usuario     Usuario      @relation(fields: [usuarioId], references: [id])
+  laboratorio Laboratorio? @relation(fields: [laboratorioId], references: [id])
+  reserva     Reserva?     @relation(fields: [reservaId], references: [id])
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@map("pago")
+}
+
+model SesionUso {
+  id                String       @id @default(uuid())
+  usuarioId         String       @map("usuario_id")
+  laboratorioId     Int?         @map("laboratorio_id")
+  equipoId          Int?         @map("equipo_id")
+  tipoConexion      TipoConexion @default(PRESENCIAL) @map("tipo_conexion")
+  inicio            DateTime     @default(now())
+  fin               DateTime?
+  registroActividad Json?        @map("registro_actividad")
+
+  usuario      Usuario      @relation(fields: [usuarioId], references: [id])
+  laboratorio  Laboratorio? @relation(fields: [laboratorioId], references: [id])
+  equipo       Equipo?      @relation(fields: [equipoId], references: [id])
+  infracciones Infraccion[]
+
+  @@map("sesion_uso")
+}
+
+model Infraccion {
+  id              Int      @id @default(autoincrement())
+  usuarioId       String   @map("usuario_id")
+  sesionUsoId     String?  @map("sesion_uso_id")
+  descripcion     String
+  sancionAplicada Boolean  @default(false) @map("sancion_aplicada")
+
+  usuario   Usuario    @relation(fields: [usuarioId], references: [id])
+  sesionUso SesionUso? @relation(fields: [sesionUsoId], references: [id])
+  createdAt DateTime   @default(now()) @map("created_at")
+
+  @@map("infraccion")
+}
+
+// ─── Sistema Académico (Grupo 1) ─────────────────────────────────────────────
+
 model Alumno {
-  id          Int           @id @default(autoincrement())
-  carnet      String        @unique
-  nombre      String
-  apellido    String
-  email       String        @unique
-  createdAt   DateTime      @default(now())
+  id           Int          @id @default(autoincrement())
+  carnet       String       @unique
+  nombre       String
+  apellido     String
+  email        String       @unique
+  createdAt    DateTime     @default(now())
   asignaciones Asignacion[]
   asistencias  Asistencia[]
 }
 
 model Catedratico {
-  id        Int      @id @default(autoincrement())
-  codigo    String   @unique
+  id        Int       @id @default(autoincrement())
+  codigo    String    @unique
   nombre    String
   apellido  String
-  email     String   @unique
-  createdAt DateTime @default(now())
+  email     String    @unique
+  createdAt DateTime  @default(now())
   horarios  Horario[]
 }
 
 model Curso {
-  id          Int          @id @default(autoincrement())
-  codigo      String       @unique
-  nombre      String
-  creditos    Int
-  createdAt   DateTime     @default(now())
+  id           Int          @id @default(autoincrement())
+  codigo       String       @unique
+  nombre       String
+  creditos     Int
+  createdAt    DateTime     @default(now())
   asignaciones Asignacion[]
-  horarios    Horario[]
+  horarios     Horario[]
 }
 
 model Asignacion {
-  id         Int      @id @default(autoincrement())
-  alumno     Alumno   @relation(fields: [alumnoId], references: [id])
-  alumnoId   Int
-  curso      Curso    @relation(fields: [cursoId], references: [id])
-  cursoId    Int
-  ciclo      String   // Ej: "2026-1"
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  alumno    Alumno   @relation(fields: [alumnoId], references: [id])
+  alumnoId  Int
+  curso     Curso    @relation(fields: [cursoId], references: [id])
+  cursoId   Int
+  ciclo     String
+  createdAt DateTime @default(now())
 
   @@unique([alumnoId, cursoId, ciclo])
 }
 
 model Horario {
-  id            Int         @id @default(autoincrement())
-  curso         Curso       @relation(fields: [cursoId], references: [id])
+  id            Int          @id @default(autoincrement())
+  curso         Curso        @relation(fields: [cursoId], references: [id])
   cursoId       Int
-  catedratico   Catedratico @relation(fields: [catedraticoId], references: [id])
+  catedratico   Catedratico  @relation(fields: [catedraticoId], references: [id])
   catedraticoId Int
-  dia           String      // Ej: "Lunes"
-  horaInicio    String      // Ej: "08:00"
-  horaFin       String      // Ej: "10:00"
+  dia           String
+  horaInicio    String
+  horaFin       String
   salon         String
   asistencias   Asistencia[]
 }
