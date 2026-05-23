@@ -121,10 +121,34 @@ export async function POST(request) {
       // ── ENTRADA ───────────────────────────────────────────────────────────
       if (!vehicle) return res.error('El usuario no tiene vehículos autorizados');
 
-      const space = await prisma.parkingSpace.findFirst({
-        where: { status: 'AVAILABLE', is_active: true },
-        orderBy: [{ zone: 'asc' }, { code: 'asc' }],
+      const now = new Date();
+      // Verificar si el usuario tiene una reserva activa en la ventana de tiempo
+      const activeReservation = await prisma.reservation.findFirst({
+        where: {
+          user_id: user.id,
+          status: 'CONFIRMED',
+          start_time: { lte: new Date(now.getTime() + 30 * 60 * 1000) }, // hasta 30 min adelante
+          end_time: { gt: now },
+        },
+        include: { space: true },
+        orderBy: { start_time: 'asc' },
       });
+
+      let space;
+      let usedReservation = null;
+
+      if (activeReservation && activeReservation.space?.status !== 'OCCUPIED') {
+        // Usar el espacio reservado
+        space = activeReservation.space;
+        usedReservation = activeReservation;
+      } else {
+        // Sin reserva válida: asignar primer espacio disponible
+        space = await prisma.parkingSpace.findFirst({
+          where: { status: 'AVAILABLE', is_active: true },
+          orderBy: [{ zone: 'asc' }, { code: 'asc' }],
+        });
+      }
+
       if (!space) return res.error('No hay espacios disponibles');
 
       const [activeEvent, activeSub] = await Promise.all([
@@ -138,8 +162,10 @@ export async function POST(request) {
         user_id: user.id,
         entry_method: 'QR',
         status: 'ACTIVE',
-        entry_time: new Date(),
-        notes: activeEvent ? `Evento: ${activeEvent.name}` : null,
+        entry_time: now,
+        notes: usedReservation
+          ? `Reserva: ${usedReservation.id}${activeEvent ? ` | Evento: ${activeEvent.name}` : ''}`
+          : (activeEvent ? `Evento: ${activeEvent.name}` : null),
       };
 
       if (activeSub) {
@@ -149,10 +175,21 @@ export async function POST(request) {
         sessionData.amount_due = parseFloat(activeEvent.flat_rate);
       }
 
-      const [session] = await prisma.$transaction([
+      const txOps = [
         prisma.parkingSession.create({ data: sessionData }),
         prisma.parkingSpace.update({ where: { id: space.id }, data: { status: 'OCCUPIED' } }),
-      ]);
+      ];
+
+      if (usedReservation) {
+        txOps.push(
+          prisma.reservation.update({
+            where: { id: usedReservation.id },
+            data: { status: 'USED' },
+          })
+        );
+      }
+
+      const [session] = await prisma.$transaction(txOps);
 
       return res.ok({
         action: 'ENTRY',
@@ -164,6 +201,7 @@ export async function POST(request) {
         entry_time: session.entry_time,
         evento: activeEvent?.name ?? null,
         suscripcion: !!activeSub,
+        reserva: usedReservation ? { id: usedReservation.id, type: usedReservation.type } : null,
       });
     }
 
