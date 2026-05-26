@@ -375,15 +375,32 @@ model Infraccion {
 
 // ─── Sistema académico (feature/sistema-academico-grupo1) ─────────────────────
 
+model Carrera {
+  id        Int      @id @default(autoincrement())
+  codigo    String   @unique
+  nombre    String
+  facultad  String?
+  activo    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  alumnos Alumno[]
+
+  @@map("carrera")
+}
+
 model Alumno {
   id           Int          @id @default(autoincrement())
   carnet       String       @unique
   nombre       String
   apellido     String
   email        String       @unique
+  carreraId    Int?         @map("carrera_id")
   createdAt    DateTime     @default(now()) @map("created_at")
   asignaciones Asignacion[]
   asistencias  Asistencia[]
+
+  carrera Carrera? @relation(fields: [carreraId], references: [id])
 
   @@map("alumno")
 }
