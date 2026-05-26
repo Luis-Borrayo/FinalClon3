@@ -443,3 +443,25 @@ ALTER TABLE "asistencia" ADD CONSTRAINT "asistencia_alumno_id_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "asistencia" ADD CONSTRAINT "asistencia_horario_id_fkey" FOREIGN KEY ("horario_id") REFERENCES "horario"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- CreateTable (carrera)
+CREATE TABLE "carrera" (
+    "id" SERIAL NOT NULL,
+    "codigo" TEXT NOT NULL,
+    "nombre" TEXT NOT NULL,
+    "facultad" TEXT,
+    "activo" BOOLEAN NOT NULL DEFAULT true,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "carrera_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "carrera_codigo_key" ON "carrera"("codigo");
+
+-- AlterTable (alumno — agregar carrera_id)
+ALTER TABLE "alumno" ADD COLUMN "carrera_id" INTEGER;
+
+-- AddForeignKey
+ALTER TABLE "alumno" ADD CONSTRAINT "alumno_carrera_id_fkey" FOREIGN KEY ("carrera_id") REFERENCES "carrera"("id") ON DELETE SET NULL ON UPDATE CASCADE;

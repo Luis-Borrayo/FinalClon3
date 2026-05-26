@@ -1,6 +1,5 @@
 generator client {
-  provider   = "prisma-client-js"
-  engineType = "library"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -434,7 +433,7 @@ model Asignacion {
   id        Int      @id @default(autoincrement())
   alumnoId  Int      @map("alumno_id")
   cursoId   Int      @map("curso_id")
-  ciclo     String   // Ej: "2026-1"
+  ciclo     String
   createdAt DateTime @default(now()) @map("created_at")
 
   alumno Alumno @relation(fields: [alumnoId], references: [id])
@@ -448,9 +447,9 @@ model Horario {
   id            Int      @id @default(autoincrement())
   cursoId       Int      @map("curso_id")
   catedraticoId Int      @map("catedratico_id")
-  dia           String   // Ej: "Lunes"
-  horaInicio    String   // Ej: "08:00"
-  horaFin       String   // Ej: "10:00"
+  dia           String
+  horaInicio    String   @map("hora_inicio")
+  horaFin       String   @map("hora_fin")
   salon         String
   createdAt     DateTime @default(now()) @map("created_at")
 
