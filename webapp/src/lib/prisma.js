@@ -9,6 +9,7 @@ function createClient() {
     const adapter = new PrismaPg({
       connectionString: url,
       ssl: { rejectUnauthorized: false },
+      options: '-c search_path=grupo5_parqueo',
     });
     return new PrismaClient({ adapter });
   }
