@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["grupo5_parqueo"]
+  schemas  = ["grupo5_parqueo", "grupo1_academico"]
 }
 
 enum Role {
@@ -639,4 +639,145 @@ model BlockchainAudit {
   @@index([status])
 
   @@schema("grupo5_parqueo")
+}
+
+// ─── Sistema Académico (Grupo 1) ─────────────────────────────────────────────
+
+model Carrera {
+  id            Int                    @id @default(autoincrement())
+  codigo        String                 @unique
+  nombre        String
+  facultad      String?
+  nivel         String                 @default("LICENCIATURA")
+  activo        Boolean                @default(true)
+  createdAt     DateTime               @default(now())
+  alumnos       Alumno[]
+  planesEstudio PlanEstudio[]
+  solicitudes   SolicitudInscripcion[]
+
+  @@schema("grupo1_academico")
+}
+
+model Alumno {
+  id           Int          @id @default(autoincrement())
+  carnet       String       @unique
+  nombre       String
+  apellido     String
+  email        String       @unique
+  password     String?
+  carreraId    Int?
+  carrera      Carrera?     @relation(fields: [carreraId], references: [id])
+  createdAt    DateTime     @default(now())
+  asignaciones Asignacion[]
+  asistencias  Asistencia[]
+
+  @@schema("grupo1_academico")
+}
+
+model CatedraticoAcademico {
+  id        Int       @id @default(autoincrement())
+  codigo    String    @unique
+  nombre    String
+  apellido  String
+  email     String    @unique
+  createdAt DateTime  @default(now())
+  horarios  Horario[]
+
+  @@schema("grupo1_academico")
+}
+
+model Curso {
+  id           Int          @id @default(autoincrement())
+  codigo       String       @unique
+  nombre       String
+  creditos     Int
+  createdAt    DateTime     @default(now())
+  asignaciones Asignacion[]
+  horarios     Horario[]
+  planesCurso  CursoPlan[]
+
+  @@schema("grupo1_academico")
+}
+
+model Asignacion {
+  id        Int      @id @default(autoincrement())
+  alumno    Alumno   @relation(fields: [alumnoId], references: [id])
+  alumnoId  Int
+  curso     Curso    @relation(fields: [cursoId], references: [id])
+  cursoId   Int
+  ciclo     String
+  createdAt DateTime @default(now())
+
+  @@unique([alumnoId, cursoId, ciclo])
+  @@schema("grupo1_academico")
+}
+
+model Horario {
+  id            Int                  @id @default(autoincrement())
+  curso         Curso                @relation(fields: [cursoId], references: [id])
+  cursoId       Int
+  catedratico   CatedraticoAcademico @relation(fields: [catedraticoId], references: [id])
+  catedraticoId Int
+  dia           String
+  horaInicio    String
+  horaFin       String
+  salon         String
+  asistencias   Asistencia[]
+
+  @@schema("grupo1_academico")
+}
+
+model Asistencia {
+  id        Int      @id @default(autoincrement())
+  alumno    Alumno   @relation(fields: [alumnoId], references: [id])
+  alumnoId  Int
+  horario   Horario  @relation(fields: [horarioId], references: [id])
+  horarioId Int
+  fecha     DateTime
+  presente  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([alumnoId, horarioId, fecha])
+  @@schema("grupo1_academico")
+}
+
+model SolicitudInscripcion {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  apellido  String
+  email     String
+  telefono  String
+  carreraId Int
+  carrera   Carrera  @relation(fields: [carreraId], references: [id])
+  estado    String   @default("PENDIENTE")
+  motivo    String?
+  createdAt DateTime @default(now())
+
+  @@schema("grupo1_academico")
+}
+
+model PlanEstudio {
+  id            Int         @id @default(autoincrement())
+  carreraId     Int
+  carrera       Carrera     @relation(fields: [carreraId], references: [id])
+  nombre        String
+  version       String
+  totalCreditos Int
+  createdAt     DateTime    @default(now())
+  cursos        CursoPlan[]
+
+  @@schema("grupo1_academico")
+}
+
+model CursoPlan {
+  id            Int         @id @default(autoincrement())
+  planEstudioId Int
+  planEstudio   PlanEstudio @relation(fields: [planEstudioId], references: [id])
+  cursoId       Int
+  curso         Curso       @relation(fields: [cursoId], references: [id])
+  semestre      Int
+  obligatorio   Boolean     @default(true)
+
+  @@unique([planEstudioId, cursoId])
+  @@schema("grupo1_academico")
 }
