@@ -10,9 +10,9 @@ function createClient() {
     const pool = new pg.Pool({
       connectionString: url,
       ssl: { rejectUnauthorized: false },
-      options: '-c search_path=grupo1_academico',
       max: 2,
     });
+    pool.on('connect', client => { client.query('SET search_path TO grupo1_academico'); });
     const adapter = new PrismaPg(pool);
     return new PrismaClient({ adapter });
   }
