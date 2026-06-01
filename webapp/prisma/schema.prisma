@@ -890,7 +890,7 @@ enum EstadoReporteDano {
   @@schema("grupo3_laboratorios")
 }
 
-model UsuarioLab {
+model Usuario {
   id               String           @id @default(uuid())
   correo           String           @unique
   nombre           String
@@ -905,21 +905,21 @@ model UsuarioLab {
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
-  reservas               ReservaLab[]              @relation("ReservaSolicitante")
-  reservasAprobadas      ReservaLab[]              @relation("ReservaAprobador")
+  reservas               Reserva[]              @relation("ReservaSolicitante")
+  reservasAprobadas      Reserva[]              @relation("ReservaAprobador")
   sesionesUso            SesionUso[]
-  pagosLab               PagoLab[]
-  sanciones              SancionLab[]
+  pagosLab               Pago[]
+  sanciones              Sancion[]
   reportesDano           ReporteDano[]             @relation("ReportePor")
   danosResponsable       ReporteDano[]             @relation("DanoResponsable")
-  infracciones           InfraccionLab[]
+  infracciones           Infraccion[]
   mantenimientos         MantenimientoEquipo[]     @relation("MantenimientoTecnico")
 
   @@map("usuario")
   @@schema("grupo3_laboratorios")
 }
 
-model SancionLab {
+model Sancion {
   id            Int         @id @default(autoincrement())
   usuarioId     String      @map("usuario_id")
   tipo          TipoSancion
@@ -931,7 +931,7 @@ model SancionLab {
   notas         String?
   createdAt     DateTime    @default(now()) @map("created_at")
 
-  usuario UsuarioLab @relation(fields: [usuarioId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
 
   @@map("sancion")
   @@schema("grupo3_laboratorios")
@@ -953,10 +953,10 @@ model Laboratorio {
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
   configuraciones ConfiguracionDivision[]
-  estaciones      EstacionLab[]
-  equipos         EquipoLab[]
-  reservas        ReservaLab[]
-  pagos           PagoLab[]
+  estaciones      Estacion[]
+  equipos         Equipo[]
+  reservas        Reserva[]
+  pagos           Pago[]
   sesionesUso     SesionUso[]
 
   @@map("laboratorio")
@@ -973,13 +973,13 @@ model ConfiguracionDivision {
   orden           Int        @default(0)
 
   laboratorio Laboratorio  @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
-  reservas    ReservaLab[]
+  reservas    Reserva[]
 
   @@map("configuracion_division")
   @@schema("grupo3_laboratorios")
 }
 
-model EstacionLab {
+model Estacion {
   id            Int         @id @default(autoincrement())
   laboratorioId Int         @map("laboratorio_id")
   nombre        String
@@ -994,7 +994,7 @@ model EstacionLab {
   @@schema("grupo3_laboratorios")
 }
 
-model EquipoLab {
+model Equipo {
   id               Int          @id @default(autoincrement())
   laboratorioId    Int          @map("laboratorio_id")
   codigoInventario String       @unique @map("codigo_inventario")
@@ -1025,8 +1025,8 @@ model MantenimientoEquipo {
   fecha       DateTime            @default(now())
   createdAt   DateTime            @default(now()) @map("created_at")
 
-  equipo  EquipoLab   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
-  tecnico UsuarioLab? @relation("MantenimientoTecnico", fields: [tecnicoId], references: [id])
+  equipo  Equipo   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  tecnico Usuario? @relation("MantenimientoTecnico", fields: [tecnicoId], references: [id])
 
   @@map("mantenimiento_equipo")
   @@schema("grupo3_laboratorios")
@@ -1043,15 +1043,15 @@ model ReporteDano {
   estado               EstadoReporteDano @default(REPORTADO)
   createdAt            DateTime          @default(now()) @map("created_at")
 
-  equipo             EquipoLab   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
-  reportadoPor       UsuarioLab  @relation("ReportePor", fields: [reportadoPorId], references: [id])
-  usuarioResponsable UsuarioLab? @relation("DanoResponsable", fields: [usuarioResponsableId], references: [id])
+  equipo             Equipo   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  reportadoPor       Usuario  @relation("ReportePor", fields: [reportadoPorId], references: [id])
+  usuarioResponsable Usuario? @relation("DanoResponsable", fields: [usuarioResponsableId], references: [id])
 
   @@map("reporte_dano")
   @@schema("grupo3_laboratorios")
 }
 
-model ReservaLab {
+model Reserva {
   id                      String        @id @default(uuid())
   usuarioId               String        @map("usuario_id")
   laboratorioId           Int           @map("laboratorio_id")
@@ -1068,17 +1068,17 @@ model ReservaLab {
   createdAt               DateTime      @default(now()) @map("created_at")
   updatedAt               DateTime      @updatedAt @map("updated_at")
 
-  usuario               UsuarioLab             @relation("ReservaSolicitante", fields: [usuarioId], references: [id])
+  usuario               Usuario             @relation("ReservaSolicitante", fields: [usuarioId], references: [id])
   laboratorio           Laboratorio            @relation(fields: [laboratorioId], references: [id])
   configuracionDivision ConfiguracionDivision? @relation(fields: [configuracionDivisionId], references: [id])
-  aprobadaPor           UsuarioLab?            @relation("ReservaAprobador", fields: [aprobadaPorId], references: [id])
-  pagos                 PagoLab[]
+  aprobadaPor           Usuario?            @relation("ReservaAprobador", fields: [aprobadaPorId], references: [id])
+  pagos                 Pago[]
 
   @@map("reserva")
   @@schema("grupo3_laboratorios")
 }
 
-model PagoLab {
+model Pago {
   id                String     @id @default(uuid())
   usuarioId         String     @map("usuario_id")
   laboratorioId     Int?       @map("laboratorio_id")
@@ -1091,9 +1091,9 @@ model PagoLab {
   notas             String?
   createdAt         DateTime   @default(now()) @map("created_at")
 
-  usuario     UsuarioLab   @relation(fields: [usuarioId], references: [id])
+  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
   laboratorio Laboratorio? @relation(fields: [laboratorioId], references: [id])
-  reserva     ReservaLab?  @relation(fields: [reservaId], references: [id])
+  reserva     Reserva?  @relation(fields: [reservaId], references: [id])
 
   @@map("pago")
   @@schema("grupo3_laboratorios")
@@ -1109,16 +1109,16 @@ model SesionUso {
   fin               DateTime?
   registroActividad Json?        @map("registro_actividad")
 
-  usuario     UsuarioLab   @relation(fields: [usuarioId], references: [id])
+  usuario     Usuario   @relation(fields: [usuarioId], references: [id])
   laboratorio Laboratorio? @relation(fields: [laboratorioId], references: [id])
-  equipo      EquipoLab?   @relation(fields: [equipoId], references: [id])
-  infracciones InfraccionLab[]
+  equipo      Equipo?   @relation(fields: [equipoId], references: [id])
+  infracciones Infraccion[]
 
   @@map("sesion_uso")
   @@schema("grupo3_laboratorios")
 }
 
-model InfraccionLab {
+model Infraccion {
   id              Int        @id @default(autoincrement())
   usuarioId       String     @map("usuario_id")
   sesionUsoId     String?    @map("sesion_uso_id")
@@ -1126,7 +1126,7 @@ model InfraccionLab {
   sancionAplicada Boolean    @default(false) @map("sancion_aplicada")
   createdAt       DateTime   @default(now()) @map("created_at")
 
-  usuario   UsuarioLab  @relation(fields: [usuarioId], references: [id])
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id])
   sesionUso SesionUso?  @relation(fields: [sesionUsoId], references: [id])
 
   @@map("infraccion")
