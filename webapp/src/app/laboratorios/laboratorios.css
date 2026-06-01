@@ -1,0 +1,187 @@
+/* Laboratorios — clases utilitarias definidas con Tailwind */
+
+.lab-module {
+  @apply min-h-screen p-4 md:p-6 space-y-4;
+}
+
+.lab-loading-bar {
+  @apply fixed top-0 left-0 w-full h-1 bg-red-600 animate-pulse z-50;
+}
+
+.lab-hero {
+  @apply p-5 rounded-xl;
+}
+
+/* Stats */
+.lab-stats {
+  @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3;
+}
+
+.lab-stat {
+  @apply rounded-xl p-4 text-center border border-white/10 bg-white/5 w-full;
+}
+
+.lab-stat--clickable {
+  @apply hover:bg-white/10 transition cursor-pointer;
+}
+
+.lab-stat-value {
+  @apply text-2xl font-bold text-white;
+}
+
+.lab-stat-value--alert {
+  @apply text-red-400;
+}
+
+.lab-stat-label {
+  @apply text-xs opacity-60 mt-1;
+}
+
+/* Tabs */
+.lab-tabs {
+  @apply flex flex-wrap gap-1 border-b border-white/10 pb-0;
+}
+
+.lab-tab {
+  @apply px-4 py-2 text-sm opacity-60 hover:opacity-100 transition flex items-center gap-2 rounded-t border-b-2 border-transparent;
+}
+
+.lab-tab.active {
+  @apply opacity-100 bg-white/10 border-b-2 border-red-500;
+}
+
+.lab-tab-badge {
+  @apply bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[1.25rem] text-center;
+}
+
+/* Grid y cards */
+.lab-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4;
+}
+
+.lab-card {
+  @apply rounded-xl p-5 border border-white/10 bg-white/5 flex flex-col;
+}
+
+.lab-card-title {
+  @apply text-lg font-semibold mb-1;
+}
+
+.lab-empty {
+  @apply text-center py-12 opacity-60 flex flex-col items-center rounded-xl border border-white/10 bg-white/5 p-6;
+}
+
+/* Badges */
+.lab-badge {
+  @apply text-xs px-2 py-0.5 rounded-full font-medium;
+}
+
+.lab-badge-activo {
+  @apply bg-green-500/20 text-green-400;
+}
+
+.lab-badge-mantenimiento {
+  @apply bg-yellow-500/20 text-yellow-400;
+}
+
+.lab-badge-inactivo {
+  @apply bg-red-500/20 text-red-400;
+}
+
+.lab-badge-fase {
+  @apply bg-white/10 text-white/70;
+}
+
+.lab-badge-pendiente {
+  @apply bg-orange-500/20 text-orange-400;
+}
+
+/* Botones */
+.lab-btn-primary {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-700 hover:bg-red-600 text-white text-sm font-medium transition;
+}
+
+.lab-btn-ghost {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/20 hover:bg-white/10 text-sm transition;
+}
+
+.lab-btn-danger {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-900/50 hover:bg-red-800 text-red-300 text-sm transition;
+}
+
+/* Disponibilidad */
+.lab-avail {
+  @apply text-xs flex items-center gap-1 mb-3 font-medium;
+}
+
+.lab-avail--libre {
+  @apply text-green-400;
+}
+
+.lab-avail--ocupado {
+  @apply text-red-400;
+}
+
+.lab-avail--proximo {
+  @apply text-yellow-400;
+}
+
+.lab-icon-wrap {
+  @apply bg-white/10;
+}
+
+.lab-config-chip {
+  @apply inline-block text-xs px-2 py-0.5 rounded bg-white/10 mr-1 mb-1;
+}
+
+/* Tablas */
+.lab-table-wrap {
+  @apply overflow-x-auto rounded-xl border border-white/10 bg-white/5 p-4;
+}
+
+.lab-table-wrap--responsive {
+  @apply overflow-x-auto rounded-xl border border-white/10 bg-white/5 p-4;
+}
+
+.lab-table {
+  @apply w-full text-sm;
+}
+
+.lab-table thead tr {
+  @apply border-b border-white/10;
+}
+
+.lab-table th {
+  @apply text-left py-2 px-3 text-xs uppercase opacity-60 font-medium;
+}
+
+.lab-table td {
+  @apply py-2 px-3 border-b border-white/5;
+}
+
+.lab-table tbody tr:hover {
+  @apply bg-white/5;
+}
+
+.lab-link-corinto {
+  @apply text-red-400 hover:underline;
+}
+
+/* Reserva card mobile */
+.lab-reserva-card {
+  @apply rounded-xl border border-white/10 bg-white/5 p-4 mb-3;
+}
+
+/* Modal */
+.lab-modal {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+}
+
+.lab-modal-overlay {
+  @apply absolute inset-0 bg-black/60;
+}
+
+/* Input */
+.lab-input {
+  @apply w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-sm focus:outline-none focus:border-red-500 transition;
+}
