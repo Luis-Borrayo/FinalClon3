@@ -57,6 +57,13 @@ const modules = [
     icon: "fa-cogs",
     bg: "bg-yellow",
   },
+  {
+    href: "/otras-actividades",
+    title: "Otras actividades",
+    description: "Gestión de eventos, actividades deportivas, culturales y más.",
+    icon: "fa-star",
+    bg: "bg-red",
+  },
 ];
 
 export default function Home() {
