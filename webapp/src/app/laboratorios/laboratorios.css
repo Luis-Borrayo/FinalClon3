@@ -45,15 +45,27 @@
 }
 
 .lab-stat-value {
-  @apply text-2xl font-bold text-white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.dark-mode .lab-stat-value {
+  color: #ffffff;
 }
 
 .lab-stat-value--alert {
-  @apply text-red-400;
+  color: #dc2626 !important;
 }
 
 .lab-stat-label {
-  @apply text-xs opacity-60 mt-1;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  color: #6b7280;
+}
+
+.dark-mode .lab-stat-label {
+  color: rgba(255,255,255,0.5);
 }
 
 /* Tabs */
