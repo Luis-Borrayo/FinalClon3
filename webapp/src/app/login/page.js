@@ -286,12 +286,8 @@ export default function LoginPage() {
         localStorage.setItem("refresh_token", data.data.refresh_token || "");
         localStorage.setItem("user", JSON.stringify(data.data.user || {}));
         document.cookie = "auth=true; path=/; SameSite=Strict";
-        const role = data.data.user?.role;
-        if (role === 'STUDENT' || role === 'TEACHER') {
-          router.push("/sistema-academico");
-        } else {
-          router.push("/parqueo");
-        }
+        const redirect = new URLSearchParams(window.location.search).get('redirect');
+        router.push(redirect || '/');
       } else {
         setError(data.error || data.message || "Credenciales inválidas.");
       }
