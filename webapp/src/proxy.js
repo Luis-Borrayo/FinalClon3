@@ -10,7 +10,7 @@ const PUBLIC_PATHS = [
   '/favicon',
 ];
 
-export function middleware(request) {
+export function proxy(request) {
   const { pathname } = request.nextUrl;
 
   // Permitir rutas públicas
