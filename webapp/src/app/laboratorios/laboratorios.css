@@ -20,11 +20,11 @@
 }
 
 .lab-stat {
-  @apply rounded-xl p-4 text-center border border-white/20 bg-gray-800 w-full shadow;
+  @apply rounded-xl p-4 text-center border border-black/10 dark:border-white/20 bg-black/5 dark:bg-white/5 w-full shadow;
 }
 
 .lab-stat--clickable {
-  @apply hover:bg-gray-700 transition cursor-pointer;
+  @apply hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer;
 }
 
 .lab-stat-value {
