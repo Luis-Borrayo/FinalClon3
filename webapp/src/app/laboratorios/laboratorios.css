@@ -20,11 +20,11 @@
 }
 
 .lab-stat {
-  @apply rounded-xl p-4 text-center border border-white/10 bg-white/5 w-full;
+  @apply rounded-xl p-4 text-center border border-white/20 bg-gray-800 w-full shadow;
 }
 
 .lab-stat--clickable {
-  @apply hover:bg-white/10 transition cursor-pointer;
+  @apply hover:bg-gray-700 transition cursor-pointer;
 }
 
 .lab-stat-value {
@@ -174,13 +174,13 @@
   @apply rounded-xl border border-white/10 bg-white/5 p-4 mb-3;
 }
 
-/* Modal */
-.lab-modal {
-  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+/* Modal — overlay es el contenedor exterior, modal es el box interior */
+.lab-modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70;
 }
 
-.lab-modal-overlay {
-  @apply absolute inset-0 bg-black/60;
+.lab-modal {
+  @apply relative bg-gray-900 border border-white/10 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl;
 }
 
 /* Input */
