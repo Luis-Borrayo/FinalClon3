@@ -6,7 +6,9 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Button } from "@/components/ui/button";
 
-const actividadesBase = [
+const actividadesBase = [];
+
+const _actividadesDemo = [
   {
     id: "ACT-2026-001",
     nombre: "Torneo Interfacultades de Futbol Sala",
@@ -202,6 +204,7 @@ function horariosSeTraslapan(horaInicioA, horaFinA, horaInicioB, horaFinB) {
 
 export default function OtrasActividadesPage() {
   const [actividades, setActividades] = useState(actividadesBase);
+  const [cargando, setCargando] = useState(true);
   const [formData, setFormData] = useState(estadoInicialFormulario);
   const [actividadEnEdicionId, setActividadEnEdicionId] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -241,6 +244,16 @@ export default function OtrasActividadesPage() {
   const duracionPersonalizada =
     Number(duracionSeleccionada) > 0 &&
     !duracionesEventoMinutos.includes(Number(duracionSeleccionada));
+
+  useEffect(() => {
+    fetch("/api/otras-actividades")
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) setActividades(json.data);
+      })
+      .catch(() => {})
+      .finally(() => setCargando(false));
+  }, []);
 
   useEffect(() => {
     if (!mensajeDemo) return undefined;
@@ -447,35 +460,24 @@ export default function OtrasActividadesPage() {
   }
 
   function enviarBorradorARevision(actividadId) {
-    let actualizado = false;
-
-    setActividades((prev) =>
-      prev.map((actividad) => {
-        if (actividad.id !== actividadId || actividad.estado !== "Borrador") return actividad;
-        actualizado = true;
-        return {
-          ...actividad,
-          estado: "Pendiente",
-          aprobador: "Pendiente",
-          observacionAprobacion: "",
-          certificados: actividad.emiteCertificado
-            ? actividad.certificados === "Plantilla cargada"
-              ? "Plantilla cargada"
-              : "Pendiente plantilla"
-            : "No aplica",
-        };
+    fetch(`/api/otras-actividades/${actividadId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accion: "enviar_revision" }),
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) {
+          setActividades((prev) =>
+            prev.map((a) => (a.id === actividadId ? json.data : a))
+          );
+          if (actividadEnEdicionId === actividadId) limpiarFormulario();
+          setMensajeDemo(`Actividad ${actividadId} enviada a aprobacion.`);
+        } else {
+          setMensajeDemo(json.message || "Error al enviar a revision.");
+        }
       })
-    );
-
-    if (!actualizado) {
-      setMensajeDemo("Solo puedes enviar a aprobacion actividades en estado borrador.");
-      return;
-    }
-
-    if (actividadEnEdicionId === actividadId) {
-      limpiarFormulario();
-    }
-    setMensajeDemo(`Actividad ${actividadId} enviada a aprobacion.`);
+      .catch(() => setMensajeDemo("Error de conexion al enviar a revision."));
   }
 
   function handleAccesoModuloChange(event) {
@@ -551,45 +553,23 @@ export default function OtrasActividadesPage() {
       return;
     }
 
-    let inscrito = false;
-    let cupoLleno = false;
-
-    setActividades((prev) =>
-      prev.map((actividad) => {
-        if (actividad.id !== eventoId) return actividad;
-
-        const inscritosActuales = Array.isArray(actividad.inscritos) ? actividad.inscritos : [];
-        if (inscritosActuales.includes(sesionModulo.email)) {
-          inscrito = true;
-          return actividad;
+    fetch(`/api/otras-actividades/${eventoId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accion: "inscribir", email: sesionModulo.email }),
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) {
+          setActividades((prev) =>
+            prev.map((a) => (a.id === eventoId ? json.data : a))
+          );
+          setMensajeDemo(`Inscripcion confirmada para el evento ${eventoId}.`);
+        } else {
+          setMensajeDemo(json.message || "Error al inscribirse.");
         }
-
-        const confirmadosActuales = Number(actividad.asistentesConfirmados) || 0;
-        const capacidad = Number(actividad.participantes) || 0;
-        if (capacidad > 0 && confirmadosActuales >= capacidad) {
-          cupoLleno = true;
-          return actividad;
-        }
-
-        return {
-          ...actividad,
-          asistentesConfirmados: confirmadosActuales + 1,
-          inscritos: [...inscritosActuales, sesionModulo.email],
-        };
       })
-    );
-
-    if (inscrito) {
-      setMensajeDemo("Ya estabas inscrito en este evento.");
-      return;
-    }
-
-    if (cupoLleno) {
-      setMensajeDemo("No hay cupo disponible para este evento.");
-      return;
-    }
-
-    setMensajeDemo(`Inscripcion confirmada para el evento ${eventoId}.`);
+      .catch(() => setMensajeDemo("Error de conexion al inscribirse."));
   }
 
   function crearActividad(estadoObjetivo) {
@@ -647,8 +627,11 @@ export default function OtrasActividadesPage() {
       ? actividades.find((item) => item.id === actividadEnEdicionId)
       : null;
 
-    const nuevaActividad = {
-      id: actividadExistente ? actividadExistente.id : generarIdActividad(actividades.length),
+    const creadorStr = sesionModulo
+      ? `${sesionModulo.nombre} (${sesionModulo.email}) - ${sesionModulo.rol}`
+      : `${usuarioAutenticado.nombre} (${usuarioAutenticado.usuario}) - ${usuarioAutenticado.rol}`;
+
+    const payload = {
       nombre: formData.nombre.trim(),
       tipo: formData.tipo,
       ubicacion: esPresencial ? formData.ubicacion.trim() : "Actividad virtual",
@@ -661,10 +644,7 @@ export default function OtrasActividadesPage() {
       horaInicio: formData.horaInicio,
       horaFin: horaFinEvento,
       participantes: Number(formData.participantes) || 0,
-      asistentesConfirmados: actividadExistente ? actividadExistente.asistentesConfirmados : 0,
-      inscritos: actividadExistente ? actividadExistente.inscritos : [],
-      creador: `${usuarioAutenticado.nombre} (${usuarioAutenticado.usuario}) - ${usuarioAutenticado.rol}`,
-      aprobador: estadoObjetivo === "Pendiente" ? "Pendiente" : "Sin enviar",
+      creador: creadorStr,
       estado: estadoObjetivo,
       certificados: formData.emiteCertificado
         ? formData.plantillaNombre
@@ -673,26 +653,48 @@ export default function OtrasActividadesPage() {
         : "No aplica",
       emiteCertificado: formData.emiteCertificado,
       descripcion: formData.descripcion.trim(),
-      observacionAprobacion: "",
     };
 
     if (actividadExistente) {
-      setActividades((prev) =>
-        prev.map((actividad) => (actividad.id === actividadExistente.id ? nuevaActividad : actividad))
-      );
+      fetch(`/api/otras-actividades/${actividadExistente.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accion: "editar", ...payload }),
+      })
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.success) {
+            setActividades((prev) =>
+              prev.map((a) => (a.id === actividadExistente.id ? json.data : a))
+            );
+            setMensajeDemo(`Actividad ${json.data.id} actualizada${estadoObjetivo === "Pendiente" ? " y enviada a aprobacion" : " como borrador"}.`);
+          } else {
+            setMensajeDemo(json.message || "Error al actualizar actividad.");
+          }
+        })
+        .catch(() => setMensajeDemo("Error de conexion al actualizar actividad."));
     } else {
-      setActividades((prev) => [nuevaActividad, ...prev]);
+      fetch("/api/otras-actividades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+        .then((r) => r.json())
+        .then((json) => {
+          if (json.success) {
+            setActividades((prev) => [json.data, ...prev]);
+            setMensajeDemo(
+              estadoObjetivo === "Pendiente"
+                ? `Actividad ${json.data.id} enviada a aprobacion.`
+                : `Actividad ${json.data.id} guardada como borrador.`
+            );
+          } else {
+            setMensajeDemo(json.message || "Error al crear actividad.");
+          }
+        })
+        .catch(() => setMensajeDemo("Error de conexion al crear actividad."));
     }
 
-    setMensajeDemo(
-      estadoObjetivo === "Pendiente"
-        ? actividadExistente
-          ? `Actividad ${nuevaActividad.id} actualizada y enviada a aprobacion.`
-          : `Actividad ${nuevaActividad.id} enviada a aprobacion.`
-        : actividadExistente
-          ? `Actividad ${nuevaActividad.id} actualizada como borrador.`
-          : `Actividad ${nuevaActividad.id} guardada como borrador.`
-    );
     limpiarFormulario();
   }
 
@@ -703,28 +705,31 @@ export default function OtrasActividadesPage() {
     }
 
     const idObjetivo = actividadRevisionActual.id;
-    setActividades((prev) =>
-      prev.map((actividad) => {
-        if (actividad.id !== idObjetivo) return actividad;
+    const aprobadorNombre = sesionModulo?.nombre || "Carlos Mendez";
 
-        const certificados =
-          nuevoEstado === "Aprobada"
-            ? actividad.emiteCertificado
-              ? "Listo para emitir"
-              : "No aplica"
-            : "No aplica";
-
-        return {
-          ...actividad,
-          estado: nuevoEstado,
-          aprobador: "Carlos Mendez",
-          certificados,
-          observacionAprobacion: observacionRevision.trim(),
-        };
+    fetch(`/api/otras-actividades/${idObjetivo}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        accion: "resolver",
+        estado: nuevoEstado,
+        aprobador: aprobadorNombre,
+        observacion: observacionRevision.trim(),
+      }),
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.success) {
+          setActividades((prev) =>
+            prev.map((a) => (a.id === idObjetivo ? json.data : a))
+          );
+          setMensajeDemo(`Actividad ${idObjetivo} ${nuevoEstado.toLowerCase()} por ${aprobadorNombre}.`);
+        } else {
+          setMensajeDemo(json.message || "Error al resolver revision.");
+        }
       })
-    );
+      .catch(() => setMensajeDemo("Error de conexion al resolver revision."));
 
-    setMensajeDemo(`Actividad ${idObjetivo} ${nuevoEstado.toLowerCase()} por Carlos Mendez.`);
     setObservacionRevision("");
     setActividadRevision("");
   }

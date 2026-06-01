@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios"]
+  schemas  = ["grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios", "grupo9_otras_actividades"]
 }
 
 enum Role {
@@ -1131,4 +1131,46 @@ model Infraccion {
 
   @@map("infraccion")
   @@schema("grupo3_laboratorios")
+}
+
+// ─── Grupo 9: Otras Actividades ───────────────────────────────────────────────
+
+enum EstadoActividad {
+  Borrador
+  Pendiente
+  Aprobada
+  Rechazada
+
+  @@schema("grupo9_otras_actividades")
+}
+
+model Actividad {
+  id                   String           @id @default(cuid())
+  codigo               String           @unique
+  nombre               String
+  tipo                 String
+  modalidad            String
+  ubicacion            String           @default("")
+  mapa_url             String           @default("")
+  meet_url             String           @default("")
+  costo                String           @default("Gratuita")
+  monto                Decimal          @default(0) @db.Decimal(10, 2)
+  fecha                String
+  hora_inicio          String           @default("")
+  hora_fin             String           @default("")
+  participantes        Int              @default(0)
+  asistentes_confirmados Int            @default(0)
+  inscritos            String[]         @default([])
+  creador              String           @default("")
+  aprobador            String           @default("")
+  estado               EstadoActividad  @default(Borrador)
+  certificados         String           @default("No aplica")
+  emite_certificado    Boolean          @default(false)
+  descripcion          String           @default("")
+  observacion_aprobacion String         @default("")
+  created_at           DateTime         @default(now())
+  updated_at           DateTime         @updatedAt
+
+  @@map("actividad")
+  @@schema("grupo9_otras_actividades")
 }
