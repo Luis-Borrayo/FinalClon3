@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["grupo5_parqueo", "grupo1_academico"]
+  schemas  = ["grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios"]
 }
 
 enum Role {
@@ -781,4 +781,354 @@ model CursoPlan {
 
   @@unique([planEstudioId, cursoId])
   @@schema("grupo1_academico")
+}
+
+// ─── Laboratorios (Grupo 3) ───────────────────────────────────────────────────
+
+enum RolUsuario {
+  ADMINISTRADOR
+  TECNICO
+  CATEDRATICO
+  ESTUDIANTE
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum CategoriaUsuario {
+  ESTUDIANTE_UNIVERSITARIO
+  PERSONAL_COLEGIO
+  PERSONAL_IGLESIA
+  EVENTO_EXTERNO
+  CATEDRATICO
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum TipoLaboratorio {
+  COMPUTACION
+  PLC_CNC
+  QUIMICA
+  FISICA
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum EstadoLaboratorio {
+  ACTIVO
+  INACTIVO
+  MANTENIMIENTO
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum EstadoReserva {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  COMPLETADA
+  CANCELADA
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum TipoCobro {
+  CUOTA_SEMESTRAL
+  PAGO_HORA
+  PAGO_DIA
+  PAGO_SEMESTRE
+  RESERVACION_GRUPO
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+  ANULADO
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum EstadoEquipo {
+  OPERATIVO
+  MANTENIMIENTO
+  DANADO
+  BAJA
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum TipoConexion {
+  PRESENCIAL
+  REMOTA
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum TipoSancion {
+  AMONESTACION
+  SUSPENSION_TEMPORAL
+  EXPULSION
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum EstadoMantenimiento {
+  PROGRAMADO
+  EN_PROCESO
+  COMPLETADO
+
+  @@schema("grupo3_laboratorios")
+}
+
+enum EstadoReporteDano {
+  REPORTADO
+  EN_REVISION
+  COBRADO
+  CERRADO
+
+  @@schema("grupo3_laboratorios")
+}
+
+model UsuarioLab {
+  id               String           @id @default(uuid())
+  correo           String           @unique
+  nombre           String
+  apellido         String?
+  rol              RolUsuario       @default(ESTUDIANTE)
+  categoria        CategoriaUsuario @default(ESTUDIANTE_UNIVERSITARIO)
+  carrera          String?
+  activo           Boolean          @default(true)
+  reglamentoAcep   Boolean          @default(false) @map("reglamento_acep")
+  sancionado       Boolean          @default(false)
+  eventoExternoRef String?          @map("evento_externo_ref")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+
+  reservas               ReservaLab[]              @relation("ReservaSolicitante")
+  reservasAprobadas      ReservaLab[]              @relation("ReservaAprobador")
+  sesionesUso            SesionUso[]
+  pagosLab               PagoLab[]
+  sanciones              SancionLab[]
+  reportesDano           ReporteDano[]             @relation("ReportePor")
+  danosResponsable       ReporteDano[]             @relation("DanoResponsable")
+  infracciones           InfraccionLab[]
+  mantenimientos         MantenimientoEquipo[]     @relation("MantenimientoTecnico")
+
+  @@map("usuario")
+  @@schema("grupo3_laboratorios")
+}
+
+model SancionLab {
+  id            Int         @id @default(autoincrement())
+  usuarioId     String      @map("usuario_id")
+  tipo          TipoSancion
+  motivo        String
+  aplicadaPorId String?     @map("aplicada_por_id")
+  fechaInicio   DateTime    @default(now()) @map("fecha_inicio")
+  fechaFin      DateTime?   @map("fecha_fin")
+  levantada     Boolean     @default(false)
+  notas         String?
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  usuario UsuarioLab @relation(fields: [usuarioId], references: [id])
+
+  @@map("sancion")
+  @@schema("grupo3_laboratorios")
+}
+
+model Laboratorio {
+  id                 Int               @id @default(autoincrement())
+  codigo             String            @unique @default("LAB-GEN")
+  nombre             String
+  descripcion        String?
+  ubicacion          String?
+  tipo               TipoLaboratorio   @default(COMPUTACION)
+  capacidadTotal     Int               @default(30) @map("capacidad_total")
+  permiteDivision    Boolean           @default(true) @map("permite_division")
+  estado             EstadoLaboratorio @default(ACTIVO)
+  faseImplementacion Int               @default(1) @map("fase_implementacion")
+  disponiblePublico  Boolean           @default(true) @map("disponible_publico")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  configuraciones ConfiguracionDivision[]
+  estaciones      EstacionLab[]
+  equipos         EquipoLab[]
+  reservas        ReservaLab[]
+  pagos           PagoLab[]
+  sesionesUso     SesionUso[]
+
+  @@map("laboratorio")
+  @@schema("grupo3_laboratorios")
+}
+
+model ConfiguracionDivision {
+  id              Int        @id @default(autoincrement())
+  laboratorioId   Int        @map("laboratorio_id")
+  etiqueta        String
+  cupo            Int
+  esGrupoCompleto Boolean    @default(false) @map("es_grupo_completo")
+  activo          Boolean    @default(true)
+  orden           Int        @default(0)
+
+  laboratorio Laboratorio  @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
+  reservas    ReservaLab[]
+
+  @@map("configuracion_division")
+  @@schema("grupo3_laboratorios")
+}
+
+model EstacionLab {
+  id            Int         @id @default(autoincrement())
+  laboratorioId Int         @map("laboratorio_id")
+  nombre        String
+  tipo          String
+  descripcion   String?
+  orden         Int         @default(0)
+  activo        Boolean     @default(true)
+
+  laboratorio Laboratorio @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
+
+  @@map("estacion")
+  @@schema("grupo3_laboratorios")
+}
+
+model EquipoLab {
+  id               Int          @id @default(autoincrement())
+  laboratorioId    Int          @map("laboratorio_id")
+  codigoInventario String       @unique @map("codigo_inventario")
+  nombre           String
+  esServidor       Boolean      @default(false) @map("es_servidor")
+  estado           EstadoEquipo @default(OPERATIVO)
+  ubicacionFisica  String?      @map("ubicacion_fisica")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  laboratorio    Laboratorio           @relation(fields: [laboratorioId], references: [id], onDelete: Cascade)
+  sesionesUso    SesionUso[]
+  reportesDano   ReporteDano[]
+  mantenimientos MantenimientoEquipo[]
+
+  @@map("equipo")
+  @@schema("grupo3_laboratorios")
+}
+
+model MantenimientoEquipo {
+  id          Int                 @id @default(autoincrement())
+  equipoId    Int                 @map("equipo_id")
+  tecnicoId   String?             @map("tecnico_id")
+  tipo        String
+  descripcion String
+  costo       Decimal?            @db.Decimal(10, 2)
+  estado      EstadoMantenimiento @default(PROGRAMADO)
+  fecha       DateTime            @default(now())
+  createdAt   DateTime            @default(now()) @map("created_at")
+
+  equipo  EquipoLab   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  tecnico UsuarioLab? @relation("MantenimientoTecnico", fields: [tecnicoId], references: [id])
+
+  @@map("mantenimiento_equipo")
+  @@schema("grupo3_laboratorios")
+}
+
+model ReporteDano {
+  id                   Int               @id @default(autoincrement())
+  equipoId             Int               @map("equipo_id")
+  reportadoPorId       String            @map("reportado_por_id")
+  usuarioResponsableId String?           @map("usuario_responsable_id")
+  descripcion          String
+  requiereCobro        Boolean           @default(false) @map("requiere_cobro")
+  montoCobro           Decimal?          @map("monto_cobro") @db.Decimal(10, 2)
+  estado               EstadoReporteDano @default(REPORTADO)
+  createdAt            DateTime          @default(now()) @map("created_at")
+
+  equipo             EquipoLab   @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  reportadoPor       UsuarioLab  @relation("ReportePor", fields: [reportadoPorId], references: [id])
+  usuarioResponsable UsuarioLab? @relation("DanoResponsable", fields: [usuarioResponsableId], references: [id])
+
+  @@map("reporte_dano")
+  @@schema("grupo3_laboratorios")
+}
+
+model ReservaLab {
+  id                      String        @id @default(uuid())
+  usuarioId               String        @map("usuario_id")
+  laboratorioId           Int           @map("laboratorio_id")
+  configuracionDivisionId Int?          @map("configuracion_division_id")
+  fechaInicio             DateTime      @map("fecha_inicio")
+  fechaFin                DateTime      @map("fecha_fin")
+  cantidadPersonas        Int           @map("cantidad_personas")
+  proposito               String
+  estado                  EstadoReserva @default(PENDIENTE)
+  aprobadaPorId           String?       @map("aprobada_por_id")
+  notas                   String?
+  motivoRechazo           String?       @map("motivo_rechazo")
+  motivoCancelacion       String?       @map("motivo_cancelacion")
+  createdAt               DateTime      @default(now()) @map("created_at")
+  updatedAt               DateTime      @updatedAt @map("updated_at")
+
+  usuario               UsuarioLab             @relation("ReservaSolicitante", fields: [usuarioId], references: [id])
+  laboratorio           Laboratorio            @relation(fields: [laboratorioId], references: [id])
+  configuracionDivision ConfiguracionDivision? @relation(fields: [configuracionDivisionId], references: [id])
+  aprobadaPor           UsuarioLab?            @relation("ReservaAprobador", fields: [aprobadaPorId], references: [id])
+  pagos                 PagoLab[]
+
+  @@map("reserva")
+  @@schema("grupo3_laboratorios")
+}
+
+model PagoLab {
+  id                String     @id @default(uuid())
+  usuarioId         String     @map("usuario_id")
+  laboratorioId     Int?       @map("laboratorio_id")
+  reservaId         String?    @map("reserva_id")
+  monto             Decimal    @db.Decimal(10, 2)
+  tipoCobro         TipoCobro  @map("tipo_cobro")
+  metodoPago        String     @map("metodo_pago")
+  estado            EstadoPago @default(PENDIENTE)
+  referenciaExterna String?    @map("referencia_externa")
+  notas             String?
+  createdAt         DateTime   @default(now()) @map("created_at")
+
+  usuario     UsuarioLab   @relation(fields: [usuarioId], references: [id])
+  laboratorio Laboratorio? @relation(fields: [laboratorioId], references: [id])
+  reserva     ReservaLab?  @relation(fields: [reservaId], references: [id])
+
+  @@map("pago")
+  @@schema("grupo3_laboratorios")
+}
+
+model SesionUso {
+  id                String       @id @default(uuid())
+  usuarioId         String       @map("usuario_id")
+  laboratorioId     Int?         @map("laboratorio_id")
+  equipoId          Int?         @map("equipo_id")
+  tipoConexion      TipoConexion @default(PRESENCIAL) @map("tipo_conexion")
+  inicio            DateTime     @default(now())
+  fin               DateTime?
+  registroActividad Json?        @map("registro_actividad")
+
+  usuario     UsuarioLab   @relation(fields: [usuarioId], references: [id])
+  laboratorio Laboratorio? @relation(fields: [laboratorioId], references: [id])
+  equipo      EquipoLab?   @relation(fields: [equipoId], references: [id])
+  infracciones InfraccionLab[]
+
+  @@map("sesion_uso")
+  @@schema("grupo3_laboratorios")
+}
+
+model InfraccionLab {
+  id              Int        @id @default(autoincrement())
+  usuarioId       String     @map("usuario_id")
+  sesionUsoId     String?    @map("sesion_uso_id")
+  descripcion     String
+  sancionAplicada Boolean    @default(false) @map("sancion_aplicada")
+  createdAt       DateTime   @default(now()) @map("created_at")
+
+  usuario   UsuarioLab  @relation(fields: [usuarioId], references: [id])
+  sesionUso SesionUso?  @relation(fields: [sesionUsoId], references: [id])
+
+  @@map("infraccion")
+  @@schema("grupo3_laboratorios")
 }

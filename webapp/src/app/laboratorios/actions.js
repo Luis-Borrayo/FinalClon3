@@ -1,6 +1,6 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/prisma-laboratorios'
 import { revalidatePath } from 'next/cache'
 
 const labInclude = {
