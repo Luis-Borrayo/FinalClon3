@@ -176,11 +176,27 @@
 
 /* Modal — overlay es el contenedor exterior, modal es el box interior */
 .lab-modal-overlay {
-  @apply fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70;
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.75);
 }
 
 .lab-modal {
-  @apply relative bg-gray-900 border border-white/10 rounded-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl;
+  position: relative;
+  background-color: #111827;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
 }
 
 /* Input */
