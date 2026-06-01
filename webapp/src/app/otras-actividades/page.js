@@ -202,6 +202,27 @@ function horariosSeTraslapan(horaInicioA, horaFinA, horaInicioB, horaFinB) {
   );
 }
 
+function rolDesdeJwt(role) {
+  if (role === "ADMIN") return "admin-eventos";
+  if (role === "TEACHER") return "event-creaator";
+  return "alumno";
+}
+
+function sesionDesdeToken() {
+  try {
+    const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+    if (!token) return null;
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return {
+      email: payload.email || "",
+      nombre: payload.name || payload.email || "Usuario",
+      rol: rolDesdeJwt(payload.role),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export default function OtrasActividadesPage() {
   const [actividades, setActividades] = useState(actividadesBase);
   const [cargando, setCargando] = useState(true);
@@ -246,6 +267,7 @@ export default function OtrasActividadesPage() {
     !duracionesEventoMinutos.includes(Number(duracionSeleccionada));
 
   useEffect(() => {
+    setSesionModulo(sesionDesdeToken());
     fetch("/api/otras-actividades")
       .then((r) => r.json())
       .then((json) => {
@@ -857,54 +879,7 @@ export default function OtrasActividadesPage() {
               </div>
             ) : null}
 
-            {!sesionModulo ? (
-              
-              <div className="card mb-0 col-6 m-auto">
-                <div className="card-header">
-                  <h5 className="mb-0">Acceso al modulo de eventos</h5>
-                </div>
-                
-                <div className="card-body">
-                  <form onSubmit={iniciarSesionModulo}>
-                    <div className="form-row">
-                      <div className="form-group col-md-12">
-                        <label htmlFor="moduloEmail">Correo</label>
-                        <input
-                          id="moduloEmail"
-                          name="email"
-                          type="email"
-                          className="form-control"
-                          placeholder="usuario@uspg.edu"
-                          value={accesoModulo.email}
-                          onChange={handleAccesoModuloChange}
-                        />
-                      </div>
-                      <div className="form-group col-md-12">
-                        <label htmlFor="moduloPassword">Contrasena</label>
-                        <input
-                          id="moduloPassword"
-                          name="password"
-                          type="password"
-                          className="form-control"
-                          placeholder="******"
-                          value={accesoModulo.password}
-                          onChange={handleAccesoModuloChange}
-                        />
-                      </div>
-                      <div className="form-group col-md-4 d-flex align-items-end">
-                        <button type="submit" className="w-full h-14 text-lg font-semibold bg-[#800020] hover:bg-[#600018] text-white rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-[0.98]">
-                          Iniciar sesion
-                        </button>
-                      </div>
-                    </div>
-                    <small className="text-muted d-block mb-2">
-                      Usuarios demo: <br /> alumno@uspg.edu.gt  / 123456 <br /> evento@uspg.edu.gt / 123456 <br /> admin@uspg.edu.gt / admin123
-                    </small>
-                    {errorAccesoModulo ? <div className="text-danger">{errorAccesoModulo}</div> : null}
-                  </form>
-                </div>
-              </div>
-            ) : (
+            {sesionModulo ? (
               <>
               
                 <div className="d-flex justify-content-between align-items-center flex-wrap mb-3 p-2 border rounded">
@@ -1844,7 +1819,7 @@ export default function OtrasActividadesPage() {
               </div>
             ) : null}
               </>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
