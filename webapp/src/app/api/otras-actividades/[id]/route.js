@@ -39,7 +39,7 @@ export async function PATCH(request, { params }) {
   if (error) return error;
 
   try {
-    const codigo = params.id;
+    const { id: codigo } = await params; // Next.js 15: params es async
     const dto = await request.json();
 
     const existing = await prisma.actividad.findUnique({
