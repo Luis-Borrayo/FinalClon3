@@ -1,10 +1,12 @@
 export const dynamic = 'force-dynamic';
 import pg from 'pg';
 
-export async function POST(request) {
-  // Protección mínima con secret
-  const { secret } = await request.json().catch(() => ({}));
-  if (secret !== process.env.JWT_SECRET?.slice(0, 16)) {
+// Token temporal de un solo uso — se borra este endpoint después
+const TEMP_TOKEN = 'uspg-migrate-auth-2026';
+
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  if (searchParams.get('token') !== TEMP_TOKEN) {
     return Response.json({ error: 'No autorizado' }, { status: 401 });
   }
 
@@ -15,26 +17,18 @@ export async function POST(request) {
 
   try {
     await client.connect();
-
     const steps = [];
 
-    // 1. Crear schema auth
     await client.query('CREATE SCHEMA IF NOT EXISTS auth');
     steps.push('CREATE SCHEMA auth ✓');
 
-    // 2. Mover tabla User
-    await client.query(`
-      ALTER TABLE IF EXISTS grupo5_parqueo."User" SET SCHEMA auth
-    `);
-    steps.push('ALTER TABLE User SET SCHEMA auth ✓');
+    await client.query(`ALTER TABLE IF EXISTS grupo5_parqueo."User" SET SCHEMA auth`);
+    steps.push('User movida a auth ✓');
 
-    // 3. Verificar
-    const { rows } = await client.query(`
-      SELECT schemaname, tablename
-      FROM pg_tables
-      WHERE tablename = 'User'
-    `);
-    steps.push(`Verificación: User está en → ${rows.map(r => r.schemaname).join(', ')}`);
+    const { rows } = await client.query(
+      `SELECT schemaname FROM pg_tables WHERE tablename = 'User'`
+    );
+    steps.push(`User está en: ${rows.map(r => r.schemaname).join(', ')}`);
 
     await client.end();
     return Response.json({ ok: true, steps });
