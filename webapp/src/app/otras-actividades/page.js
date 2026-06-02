@@ -882,11 +882,6 @@ export default function OtrasActividadesPage() {
 
             {sesionModulo ? (
               <>
-              
-                <div className="d-flex align-items-center flex-wrap mb-3 p-2 border rounded">
-                  <span className="mr-2">Bienvenid@,</span>
-                  <strong>{sesionModulo.nombre}</strong>
-                </div>
                 {puedeVerEstadisticas ? (
             <div className="row mb-4">
               <div className="col-md-3 col-sm-6 mb-3">

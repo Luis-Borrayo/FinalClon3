@@ -13,6 +13,7 @@ const menuItems = [
   { name: "Pagos Alumnos",                  path: "/pagos-alumnos",                 icon: "fa-money" },
   { name: "Servicios Móviles e Integrador", path: "/servicios-moviles-integrador",  icon: "fa-mobile" },
   { name: "Administración",                 path: "/administracion",                icon: "fa-cogs" },
+  { name: "Otras actividades",              path: "/otras-actividades",             icon: "fa-star" },
 ];
 
 export default function TemplateShell({ children }) {
