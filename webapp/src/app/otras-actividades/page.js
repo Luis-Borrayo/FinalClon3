@@ -214,6 +214,7 @@ function sesionDesdeToken() {
     if (!token) return null;
     const payload = JSON.parse(atob(token.split(".")[1]));
     return {
+      sub: payload.sub || "",
       email: payload.email || "",
       nombre: payload.name || payload.email || "Usuario",
       rol: rolDesdeJwt(payload.role),
@@ -578,7 +579,7 @@ export default function OtrasActividadesPage() {
     fetch(`/api/otras-actividades/${eventoId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accion: "inscribir", email: sesionModulo.email }),
+      body: JSON.stringify({ accion: "inscribir", email: sesionModulo.email, user_id: sesionModulo.sub }),
     })
       .then((r) => r.json())
       .then((json) => {

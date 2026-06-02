@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import * as res from '@/lib/response';
 
 function toFrontend(a) {
+  const inscritos = (a.inscripciones ?? []).map(i => i.email);
   return {
     id: a.codigo,
     _dbId: a.id,
@@ -19,7 +20,7 @@ function toFrontend(a) {
     horaFin: a.hora_fin,
     participantes: a.participantes,
     asistentesConfirmados: a.asistentes_confirmados,
-    inscritos: a.inscritos,
+    inscritos,
     creador: a.creador,
     aprobador: a.aprobador,
     estado: a.estado,
@@ -30,10 +31,13 @@ function toFrontend(a) {
   };
 }
 
+const includeInscripciones = { inscripciones: { select: { email: true, user_id: true } } };
+
 export async function GET() {
   try {
     const actividades = await prisma.actividad.findMany({
       orderBy: { created_at: 'desc' },
+      include: includeInscripciones,
     });
     return res.ok(actividades.map(toFrontend));
   } catch (e) {
@@ -44,7 +48,6 @@ export async function GET() {
 export async function POST(request) {
   try {
     const dto = await request.json();
-
     if (!dto.nombre?.trim() || !dto.fecha || !dto.horaInicio) {
       return res.error('Faltan campos requeridos: nombre, fecha, horaInicio');
     }
@@ -68,7 +71,6 @@ export async function POST(request) {
         hora_fin: dto.horaFin || '',
         participantes: parseInt(dto.participantes) || 0,
         asistentes_confirmados: 0,
-        inscritos: [],
         creador: dto.creador || '',
         aprobador: dto.estado === 'Pendiente' ? 'Pendiente' : 'Sin enviar',
         estado: dto.estado || 'Borrador',
@@ -77,6 +79,7 @@ export async function POST(request) {
         descripcion: dto.descripcion?.trim() || '',
         observacion_aprobacion: '',
       },
+      include: includeInscripciones,
     });
 
     return res.created(toFrontend(actividad), 'Actividad creada');

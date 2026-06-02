@@ -41,7 +41,7 @@ export async function POST(request) {
         const valid = await bcrypt.compare(password, parqueoUser.password_hash);
         if (valid) {
           await prisma.user.update({ where: { id: parqueoUser.id }, data: { last_login_at: new Date() } });
-          const payload = { sub: parqueoUser.id, email: parqueoUser.email, name: `${parqueoUser.first_name} ${parqueoUser.last_name}`.trim(), role: parqueoUser.role, source: 'parqueo' };
+          const payload = { sub: parqueoUser.id, email: parqueoUser.email, name: `${parqueoUser.first_name} ${parqueoUser.last_name}`.trim(), role: parqueoUser.role, source: 'uspg' };
           return Response.json({
             success: true,
             data: {
@@ -53,7 +53,7 @@ export async function POST(request) {
                 nombre: parqueoUser.first_name,
                 apellido: parqueoUser.last_name,
                 role: parqueoUser.role,
-                source: 'parqueo',
+                source: 'uspg',
               },
             },
           });
@@ -80,7 +80,7 @@ export async function POST(request) {
           data: { parqueo_user_id: masterUser.id },
         });
       }
-      const payload = { sub: masterUser.id, email: alumno.email, name: `${alumno.nombre} ${alumno.apellido}`.trim(), role: 'STUDENT', source: 'academico', carnet: alumno.carnet };
+      const payload = { sub: masterUser.id, email: alumno.email, name: `${alumno.nombre} ${alumno.apellido}`.trim(), role: 'STUDENT', source: 'uspg', carnet: alumno.carnet };
       return Response.json({
         success: true,
         data: {
@@ -94,7 +94,7 @@ export async function POST(request) {
             carnet: alumno.carnet,
             carrera: alumno.carrera?.nombre ?? null,
             role: 'STUDENT',
-            source: 'academico',
+            source: 'uspg',
           },
         },
       });
@@ -118,7 +118,7 @@ export async function POST(request) {
             data: { parqueo_user_id: masterUser.id },
           });
         }
-        const payload = { sub: masterUser.id, email: catedratico.email, name: `${catedratico.nombre} ${catedratico.apellido}`.trim(), role: 'TEACHER', source: 'academico' };
+        const payload = { sub: masterUser.id, email: catedratico.email, name: `${catedratico.nombre} ${catedratico.apellido}`.trim(), role: 'TEACHER', source: 'uspg' };
         return Response.json({
           success: true,
           data: {
@@ -131,7 +131,7 @@ export async function POST(request) {
               apellido: catedratico.apellido,
               codigo: catedratico.codigo,
               role: 'TEACHER',
-              source: 'academico',
+              source: 'uspg',
             },
           },
         });
