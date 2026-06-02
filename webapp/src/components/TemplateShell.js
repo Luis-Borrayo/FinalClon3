@@ -53,9 +53,13 @@ export default function TemplateShell({ children }) {
 
   const toggleTheme = () => setIsDark(!isDark);
 
-  const handleLogout = () => {
-    document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
-    document.cookie = "refresh_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;";
+  const handleLogout = async () => {
+    // Llamar al servidor para borrar las cookies HttpOnly
+    // (JS no puede borrar cookies HttpOnly directamente)
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch (_) {}
+    // Limpiar localStorage
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
