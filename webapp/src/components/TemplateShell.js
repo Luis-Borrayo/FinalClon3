@@ -2,25 +2,15 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { getMenuForRole } from "@/lib/navigation/menu";
 
-const menuItems = [
-  { name: "Dashboard",                      path: "/",                              icon: "fa-dashboard" },
-  { name: "Sistema Académico",              path: "/sistema-academico",             icon: "fa-graduation-cap" },
-  { name: "Control de Notas",               path: "/control-de-notas",              icon: "fa-file-text-o" },
-  { name: "Laboratorios",                   path: "/laboratorios",                  icon: "fa-flask" },
-  { name: "Biblioteca",                     path: "/biblioteca",                    icon: "fa-book" },
-  { name: "Parqueo",                        path: "/parqueo",                       icon: "fa-car" },
-  { name: "Pagos Alumnos",                  path: "/pagos-alumnos",                 icon: "fa-money" },
-  { name: "Servicios Móviles e Integrador", path: "/servicios-moviles-integrador",  icon: "fa-mobile" },
-  { name: "Administración",                 path: "/administracion",                icon: "fa-cogs" },
-  { name: "Otras actividades",              path: "/otras-actividades",             icon: "fa-star" },
-];
 
 export default function TemplateShell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isDark, setIsDark] = useState(true);
   const [nombreUsuario, setNombreUsuario] = useState("");
+  const [menuItems, setMenuItems] = useState([]);
 
   useEffect(() => {
     if (isDark) {
@@ -38,6 +28,7 @@ export default function TemplateShell({ children }) {
         const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")));
         const nombre = payload.nombre || payload.name || payload.sub || "";
         setNombreUsuario(nombre);
+        setMenuItems(getMenuForRole(payload.role || null));
       }
     } catch (_) {}
   }, []);
