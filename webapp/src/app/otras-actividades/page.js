@@ -127,8 +127,10 @@ function generarIdActividad(totalActual) {
 }
 
 function buildMapSrc(mapaUrl, ubicacion) {
-  const referencia = mapaUrl?.trim() || ubicacion?.trim() || "Universidad San Pablo de Guatemala";
-  return `https://www.google.com/maps?q=${encodeURIComponent(referencia)}&output=embed`;
+  const base = mapaUrl?.trim() || ubicacion?.trim() || "Universidad San Pablo de Guatemala";
+  // Añadir contexto geográfico si no lo tiene, para que Google Maps localice mejor
+  const referencia = base.toLowerCase().includes("guatemala") ? base : `${base}, Guatemala`;
+  return `https://maps.google.com/maps?q=${encodeURIComponent(referencia)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
 }
 
 function valorCosto(actividad) {
@@ -1098,6 +1100,8 @@ export default function OtrasActividadesPage() {
                                 src={mapSrc}
                                 style={{ width: "100%", height: "220px", border: 0 }}
                                 loading="lazy"
+                                allowFullScreen
+                                referrerPolicy="no-referrer-when-downgrade"
                               />
                             </div>
                           </div>
@@ -1774,6 +1778,18 @@ export default function OtrasActividadesPage() {
                           <span>{actividadDetalle.ubicacion || "-"}</span>
                         )}
                       </div>
+                      {actividadDetalle.modalidad !== "Virtual" && actividadDetalle.ubicacion && (
+                        <div className="col-md-12 mb-2">
+                          <iframe
+                            title="Mapa de ubicacion"
+                            src={buildMapSrc(actividadDetalle.mapaUrl, actividadDetalle.ubicacion)}
+                            style={{ width: "100%", height: "200px", border: 0, borderRadius: "6px" }}
+                            loading="lazy"
+                            allowFullScreen
+                            referrerPolicy="no-referrer-when-downgrade"
+                          />
+                        </div>
+                      )}
                       <div className="col-md-6 mb-2">
                         <small className="text-muted d-block">Costo</small>
                         <span>{valorCosto(actividadDetalle)}</span>
