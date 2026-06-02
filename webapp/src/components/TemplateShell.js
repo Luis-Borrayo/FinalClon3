@@ -34,7 +34,8 @@ export default function TemplateShell({ children }) {
     try {
       const token = localStorage.getItem("access_token");
       if (token) {
-        const payload = JSON.parse(atob(token.split(".")[1]));
+        const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+        const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")));
         const nombre = payload.nombre || payload.name || payload.sub || "";
         setNombreUsuario(nombre);
       }
