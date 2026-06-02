@@ -1,9 +1,12 @@
 export const dynamic = 'force-dynamic';
-import prisma from "@/lib/prisma-academico";
+import prismaAcademico from "@/lib/prisma-academico";
+import prismaAuth from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 export async function GET() {
   try {
-    const catedraticos = await prisma.catedraticoAcademico.findMany({
+    const catedraticos = await prismaAcademico.catedraticoAcademico.findMany({
       orderBy: { createdAt: "desc" },
       include: { horarios: { include: { curso: true } } },
     });
@@ -14,6 +17,8 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  let authUserId = null;
+
   try {
     const body = await request.json();
     const { codigo, nombre, apellido, email } = body;
@@ -25,21 +30,53 @@ export async function POST(request) {
       );
     }
 
-    const existeCodigo = await prisma.catedraticoAcademico.findUnique({ where: { codigo } });
-    if (existeCodigo) {
-      return Response.json({ success: false, error: `El código ${codigo} ya está registrado` }, { status: 409 });
-    }
+    const existeCodigo = await prismaAcademico.catedraticoAcademico.findUnique({ where: { codigo } });
+    if (existeCodigo) return Response.json({ success: false, error: `El código ${codigo} ya está registrado` }, { status: 409 });
 
-    const existeEmail = await prisma.catedraticoAcademico.findUnique({ where: { email } });
-    if (existeEmail) {
-      return Response.json({ success: false, error: `El email ${email} ya está registrado` }, { status: 409 });
-    }
+    const existeEmail = await prismaAcademico.catedraticoAcademico.findUnique({ where: { email } });
+    if (existeEmail) return Response.json({ success: false, error: `El email ${email} ya está registrado` }, { status: 409 });
 
-    const catedratico = await prisma.catedraticoAcademico.create({
-      data: { codigo, nombre, apellido, email },
+    // ── PASO 1: crear auth.User ────────────────────────────────────
+    const passwordTemporal = Array.from({ length: 8 }, () =>
+      "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"[
+        Math.floor(Math.random() * 54)
+      ]
+    ).join("");
+
+    const authUser = await prismaAuth.user.create({
+      data: {
+        email,
+        password_hash: await bcrypt.hash(passwordTemporal, 10),
+        role:          "TEACHER",
+        first_name:    nombre,
+        last_name:     apellido,
+        qr_code:       crypto.randomUUID(),
+        is_active:     true,
+      },
     });
-    return Response.json({ success: true, data: catedratico }, { status: 201 });
+    authUserId = authUser.id;
+
+    // ── PASO 2: crear CatedraticoAcademico enlazado a auth.User ───
+    const catedratico = await prismaAcademico.catedraticoAcademico.create({
+      data: {
+        codigo,
+        nombre,
+        apellido,
+        email,
+        parqueo_user_id: authUser.id,   // ← vínculo con auth.User
+      },
+    });
+
+    return Response.json(
+      { success: true, data: { ...catedratico, auth_user_id: authUser.id } },
+      { status: 201 }
+    );
+
   } catch (error) {
+    // Compensación: borrar auth.User si el catedrático falló
+    if (authUserId) {
+      await prismaAuth.user.delete({ where: { id: authUserId } }).catch(() => {});
+    }
     return Response.json({ success: false, error: error.message }, { status: 500 });
   }
 }
