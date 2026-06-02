@@ -47,7 +47,7 @@ export async function POST(request) {
         : { carnet: identifier },
       include: { carrera: true },
     });
-    if (alumno && alumno.password === password) {
+    if (alumno && alumno.password && await bcrypt.compare(password, alumno.password)) {
       const payload = { sub: String(alumno.id), email: alumno.email, name: `${alumno.nombre} ${alumno.apellido}`.trim(), role: 'STUDENT', source: 'academico' };
       return Response.json({
         success: true,
@@ -73,7 +73,7 @@ export async function POST(request) {
       const catedratico = await prismaAcademico.catedraticoAcademico.findUnique({
         where: { email: identifier },
       });
-      if (catedratico && catedratico.password === password) {
+      if (catedratico && catedratico.password && await bcrypt.compare(password, catedratico.password)) {
         const payload = { sub: String(catedratico.id), email: catedratico.email, name: `${catedratico.nombre} ${catedratico.apellido}`.trim(), role: 'TEACHER', source: 'academico' };
         return Response.json({
           success: true,
