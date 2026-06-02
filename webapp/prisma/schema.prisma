@@ -659,30 +659,32 @@ model Carrera {
 }
 
 model Alumno {
-  id           Int          @id @default(autoincrement())
-  carnet       String       @unique
-  nombre       String
-  apellido     String
-  email        String       @unique
-  password     String?
-  carreraId    Int?
-  carrera      Carrera?     @relation(fields: [carreraId], references: [id])
-  createdAt    DateTime     @default(now())
-  asignaciones Asignacion[]
-  asistencias  Asistencia[]
+  id              Int          @id @default(autoincrement())
+  carnet          String       @unique
+  nombre          String
+  apellido        String
+  email           String       @unique
+  password        String?
+  parqueo_user_id String?
+  carreraId       Int?
+  carrera         Carrera?     @relation(fields: [carreraId], references: [id])
+  createdAt       DateTime     @default(now())
+  asignaciones    Asignacion[]
+  asistencias     Asistencia[]
 
   @@schema("grupo1_academico")
 }
 
 model CatedraticoAcademico {
-  id        Int       @id @default(autoincrement())
-  codigo    String    @unique
-  nombre    String
-  apellido  String
-  email     String    @unique
-  password  String?
-  createdAt DateTime  @default(now())
-  horarios  Horario[]
+  id              Int       @id @default(autoincrement())
+  codigo          String    @unique
+  nombre          String
+  apellido        String
+  email           String    @unique
+  password        String?
+  parqueo_user_id String?
+  createdAt       DateTime  @default(now())
+  horarios        Horario[]
 
   @@schema("grupo1_academico")
 }
@@ -902,6 +904,7 @@ model Usuario {
   reglamentoAcep   Boolean          @default(false) @map("reglamento_acep")
   sancionado       Boolean          @default(false)
   eventoExternoRef String?          @map("evento_externo_ref")
+  parqueoUserId    String?          @map("parqueo_user_id")
   createdAt        DateTime         @default(now()) @map("created_at")
   updatedAt        DateTime         @updatedAt @map("updated_at")
 
