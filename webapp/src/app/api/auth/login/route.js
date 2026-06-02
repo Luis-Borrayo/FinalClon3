@@ -20,7 +20,7 @@ export async function POST(request) {
         const valid = await bcrypt.compare(password, parqueoUser.password_hash);
         if (valid) {
           await prisma.user.update({ where: { id: parqueoUser.id }, data: { last_login_at: new Date() } });
-          const payload = { sub: parqueoUser.id, email: parqueoUser.email, role: parqueoUser.role, source: 'parqueo' };
+          const payload = { sub: parqueoUser.id, email: parqueoUser.email, name: `${parqueoUser.first_name} ${parqueoUser.last_name}`.trim(), role: parqueoUser.role, source: 'parqueo' };
           return Response.json({
             success: true,
             data: {
@@ -48,7 +48,7 @@ export async function POST(request) {
       include: { carrera: true },
     });
     if (alumno && alumno.password === password) {
-      const payload = { sub: String(alumno.id), email: alumno.email, role: 'STUDENT', source: 'academico' };
+      const payload = { sub: String(alumno.id), email: alumno.email, name: `${alumno.nombre} ${alumno.apellido}`.trim(), role: 'STUDENT', source: 'academico' };
       return Response.json({
         success: true,
         data: {
@@ -74,7 +74,7 @@ export async function POST(request) {
         where: { email: identifier },
       });
       if (catedratico && catedratico.password === password) {
-        const payload = { sub: String(catedratico.id), email: catedratico.email, role: 'TEACHER', source: 'academico' };
+        const payload = { sub: String(catedratico.id), email: catedratico.email, name: `${catedratico.nombre} ${catedratico.apellido}`.trim(), role: 'TEACHER', source: 'academico' };
         return Response.json({
           success: true,
           data: {

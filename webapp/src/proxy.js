@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 
 const PUBLIC_PATHS = [
   '/login',
-  '/api/auth/login',
   '/api/auth/',
-  '/api/parqueo/auth',
   '/kiosco',
   '/_next',
   '/favicon',
