@@ -285,7 +285,6 @@ export default function LoginPage() {
         localStorage.setItem("access_token", data.data.access_token);
         localStorage.setItem("refresh_token", data.data.refresh_token || "");
         localStorage.setItem("user", JSON.stringify(data.data.user || {}));
-        document.cookie = "auth=true; path=/; SameSite=Strict";
         const redirect = new URLSearchParams(window.location.search).get('redirect');
         router.push(redirect || '/');
       } else {

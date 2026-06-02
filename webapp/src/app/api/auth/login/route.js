@@ -5,6 +5,15 @@ import prismaAcademico from '@/lib/prisma-academico';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 
+function makeResponse(body, status = 200, accessToken = null, refreshToken = null) {
+  const res = Response.json(body, { status });
+  if (accessToken) {
+    res.headers.append('Set-Cookie', `access_token=${accessToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=3600`);
+    res.headers.append('Set-Cookie', `refresh_token=${refreshToken}; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800`);
+  }
+  return res;
+}
+
 // Busca o crea un User en parqueo para un usuario académico.
 // Retorna el UUID del User (fuente de verdad de IDs).
 async function getOrCreateParqueoUser({ email, nombre, apellido, role }) {
@@ -42,21 +51,8 @@ export async function POST(request) {
         if (valid) {
           await prisma.user.update({ where: { id: parqueoUser.id }, data: { last_login_at: new Date() } });
           const payload = { sub: parqueoUser.id, email: parqueoUser.email, name: `${parqueoUser.first_name} ${parqueoUser.last_name}`.trim(), role: parqueoUser.role, source: 'uspg' };
-          return Response.json({
-            success: true,
-            data: {
-              access_token: signAccess(payload),
-              refresh_token: signRefresh(payload),
-              user: {
-                id: parqueoUser.id,
-                email: parqueoUser.email,
-                nombre: parqueoUser.first_name,
-                apellido: parqueoUser.last_name,
-                role: parqueoUser.role,
-                source: 'uspg',
-              },
-            },
-          });
+          const at = signAccess(payload); const rt = signRefresh(payload);
+          return makeResponse({ success: true, data: { access_token: at, refresh_token: rt, user: { id: parqueoUser.id, email: parqueoUser.email, nombre: parqueoUser.first_name, apellido: parqueoUser.last_name, role: parqueoUser.role, source: 'uspg' } } }, 200, at, rt);
         }
       }
     }
@@ -81,23 +77,8 @@ export async function POST(request) {
         });
       }
       const payload = { sub: masterUser.id, email: alumno.email, name: `${alumno.nombre} ${alumno.apellido}`.trim(), role: 'STUDENT', source: 'uspg', carnet: alumno.carnet };
-      return Response.json({
-        success: true,
-        data: {
-          access_token: signAccess(payload),
-          refresh_token: signRefresh(payload),
-          user: {
-            id: masterUser.id,
-            email: alumno.email,
-            nombre: alumno.nombre,
-            apellido: alumno.apellido,
-            carnet: alumno.carnet,
-            carrera: alumno.carrera?.nombre ?? null,
-            role: 'STUDENT',
-            source: 'uspg',
-          },
-        },
-      });
+      const at = signAccess(payload); const rt = signRefresh(payload);
+      return makeResponse({ success: true, data: { access_token: at, refresh_token: rt, user: { id: masterUser.id, email: alumno.email, nombre: alumno.nombre, apellido: alumno.apellido, carnet: alumno.carnet, carrera: alumno.carrera?.nombre ?? null, role: 'STUDENT', source: 'uspg' } } }, 200, at, rt);
     }
 
     // 3. Buscar en grupo1_academico.CatedraticoAcademico
@@ -119,22 +100,8 @@ export async function POST(request) {
           });
         }
         const payload = { sub: masterUser.id, email: catedratico.email, name: `${catedratico.nombre} ${catedratico.apellido}`.trim(), role: 'TEACHER', source: 'uspg' };
-        return Response.json({
-          success: true,
-          data: {
-            access_token: signAccess(payload),
-            refresh_token: signRefresh(payload),
-            user: {
-              id: masterUser.id,
-              email: catedratico.email,
-              nombre: catedratico.nombre,
-              apellido: catedratico.apellido,
-              codigo: catedratico.codigo,
-              role: 'TEACHER',
-              source: 'uspg',
-            },
-          },
-        });
+        const at = signAccess(payload); const rt = signRefresh(payload);
+        return makeResponse({ success: true, data: { access_token: at, refresh_token: rt, user: { id: masterUser.id, email: catedratico.email, nombre: catedratico.nombre, apellido: catedratico.apellido, codigo: catedratico.codigo, role: 'TEACHER', source: 'uspg' } } }, 200, at, rt);
       }
     }
 

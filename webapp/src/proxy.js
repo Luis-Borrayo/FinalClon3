@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
 
 const PUBLIC_PATHS = [
   '/login',
@@ -8,28 +9,37 @@ const PUBLIC_PATHS = [
   '/favicon',
 ];
 
-export function proxy(request) {
+export async function proxy(request) {
   const { pathname } = request.nextUrl;
 
-  // Permitir rutas públicas
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // Permitir archivos estáticos
   if (pathname.includes('.')) {
     return NextResponse.next();
   }
 
-  // Verificar cookie de sesión
-  const auth = request.cookies.get('auth')?.value;
-  if (!auth) {
+  const token = request.cookies.get('access_token')?.value;
+
+  if (!token) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  try {
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    await jwtVerify(token, secret);
+    return NextResponse.next();
+  } catch {
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    const res = NextResponse.redirect(loginUrl);
+    res.cookies.delete('access_token');
+    res.cookies.delete('refresh_token');
+    return res;
+  }
 }
 
 export const config = {
