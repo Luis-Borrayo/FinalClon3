@@ -21,34 +21,58 @@ export default function TemplateShell({ children }) {
   }, [isDark]);
 
   useEffect(() => {
-    try {
-      let nombre = "";
-      let role = null;
+    async function cargarSesion() {
+      try {
+        let nombre = "";
+        let role = null;
 
-      // 1. Leer objeto user guardado en login (tiene nombre/apellido/role)
-      const userStr = localStorage.getItem("user");
-      if (userStr) {
-        const u = JSON.parse(userStr);
-        nombre = [u.nombre, u.apellido].filter(Boolean).join(" ").trim() || u.email || "";
-        role = u.role || null;
-      }
+        // 1. Leer objeto user de localStorage (guardado en login)
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          const u = JSON.parse(userStr);
+          nombre = [u.nombre, u.apellido].filter(Boolean).join(" ").trim() || u.email || "";
+          role = u.role || null;
+        }
 
-      // 2. JWT como fuente de verdad para el rol (firmado por el servidor)
-      const token = localStorage.getItem("access_token");
-      if (token) {
-        try {
-          const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
-          const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")));
-          role = payload.role || role;
-          if (!nombre) {
-            nombre = payload.name || payload.nombre || payload.sub || "";
-          }
-        } catch (_) {}
-      }
+        // 2. JWT en localStorage como fuente de verdad para el rol
+        const token = localStorage.getItem("access_token");
+        if (token) {
+          try {
+            const base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+            const payload = JSON.parse(decodeURIComponent(atob(base64).split("").map(c => "%" + c.charCodeAt(0).toString(16).padStart(2, "0")).join("")));
+            role = payload.role || role;
+            if (!nombre) nombre = payload.name || payload.nombre || payload.sub || "";
+          } catch (_) {}
+        }
 
-      setNombreUsuario(nombre);
-      setMenuItems(getMenuForRole(role));
-    } catch (_) {}
+        // 3. Fallback: localStorage vacío pero cookie HttpOnly activa
+        //    (ej. Safari cerrado sin logout). Recuperar sesión del servidor.
+        if (!role) {
+          try {
+            const r = await fetch("/api/parqueo/auth", { credentials: "include" });
+            if (r.ok) {
+              const json = await r.json();
+              const u = json.data || json;
+              nombre = [u.first_name || u.nombre, u.last_name || u.apellido].filter(Boolean).join(" ").trim() || u.email || "";
+              role = u.role || null;
+              // Restaurar localStorage para que próximas navegaciones sean rápidas
+              if (role) {
+                localStorage.setItem("user", JSON.stringify({
+                  nombre: u.first_name || u.nombre,
+                  apellido: u.last_name || u.apellido,
+                  email: u.email,
+                  role,
+                }));
+              }
+            }
+          } catch (_) {}
+        }
+
+        setNombreUsuario(nombre);
+        setMenuItems(getMenuForRole(role));
+      } catch (_) {}
+    }
+    cargarSesion();
   }, [pathname]); // re-corre en cada navegación → captura token post-login
 
   const toggleTheme = () => setIsDark(!isDark);
