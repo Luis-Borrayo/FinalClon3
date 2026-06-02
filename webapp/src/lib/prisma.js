@@ -12,7 +12,8 @@ function createClient() {
       ssl: { rejectUnauthorized: false },
       max: 2,
     });
-    pool.on('connect', client => { client.query('SET search_path TO grupo5_parqueo'); });
+    // auth primero → User vive en auth; grupo5_parqueo segundo → resto de modelos de parqueo
+    pool.on('connect', client => { client.query('SET search_path TO auth, grupo5_parqueo'); });
     const adapter = new PrismaPg(pool);
     return new PrismaClient({ adapter });
   }

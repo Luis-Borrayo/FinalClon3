@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios", "grupo9_otras_actividades"]
+  schemas  = ["auth", "grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios", "grupo9_otras_actividades"]
 }
 
 enum Role {
@@ -14,7 +14,7 @@ enum Role {
   STUDENT
   VISITOR
 
-  @@schema("grupo5_parqueo")
+  @@schema("auth")
 }
 
 enum Zone {
@@ -199,7 +199,7 @@ model User {
   @@index([email])
   @@index([role])
 
-  @@schema("grupo5_parqueo")
+  @@schema("auth")
 }
 
 model Vehicle {
