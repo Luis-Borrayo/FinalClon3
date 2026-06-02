@@ -200,7 +200,7 @@ export default function LaboratoriosDashboard({ initialData }) {
                         <span className={`lab-badge ${estadoLabClass(lab.estado)}`}>
                           {ESTADO_LAB_LABEL[lab.estado]}
                         </span>
-                        <span className="lab-badge lab-badge-fase">Fase {lab.faseImplementacion}</span>
+                        <span className={`lab-badge lab-badge-fase lab-badge-fase-${Math.min(lab.faseImplementacion, 4)}`}>Fase {lab.faseImplementacion}</span>
                       </div>
                     </div>
                     <p className="text-xs opacity-60 mb-1">{lab.codigo}</p>
