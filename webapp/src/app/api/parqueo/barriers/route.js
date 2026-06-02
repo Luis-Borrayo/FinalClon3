@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/jwt';
 import * as res from '@/lib/response';
 
 // LIMITANTE: el estado de barreras se guarda en memoria (Map).
@@ -14,6 +15,9 @@ const barriers = new Map([
 export { barriers };
 
 export async function GET(request) {
+  const { user, error } = requireRole(request, 'ADMIN', 'SECURITY');
+  if (error) return error;
+
   const { searchParams } = new URL(request.url);
   const barrier_id = searchParams.get('barrier_id');
 

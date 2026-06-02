@@ -43,3 +43,27 @@ export function getUserFromRequest(request) {
     return null;
   }
 }
+
+/**
+ * requireRole(request, ...roles)
+ * Verifica autenticación y opcionalmente que el rol esté permitido.
+ * Uso:
+ *   const { user, error } = requireRole(request, 'ADMIN', 'TEACHER');
+ *   if (error) return error;
+ */
+export function requireRole(request, ...allowedRoles) {
+  const user = getUserFromRequest(request);
+  if (!user) {
+    return {
+      user: null,
+      error: Response.json({ success: false, error: 'No autenticado' }, { status: 401 }),
+    };
+  }
+  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+    return {
+      user: null,
+      error: Response.json({ success: false, error: 'Sin permisos para esta acción' }, { status: 403 }),
+    };
+  }
+  return { user, error: null };
+}

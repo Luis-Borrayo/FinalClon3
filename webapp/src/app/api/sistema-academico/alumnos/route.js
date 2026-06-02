@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/jwt';
 export const dynamic = 'force-dynamic';
 import { enviarCorreoBienvenidaConQR } from "@/lib/email";
 import prismaAcademico from "@/lib/prisma-academico";
@@ -49,7 +50,10 @@ async function generarCarnetAutomatico() {
   return `260${String(parseInt(ultimo.carnet.slice(3)) + 1).padStart(4, "0")}`;
 }
 
-export async function GET() {
+export async function GET(request) {
+  const { user, error } = requireRole(request, 'ADMIN');
+  if (error) return error;
+
   try {
     const alumnos = await prismaAcademico.alumno.findMany({
       include: { asignaciones: true, carrera: true },
@@ -62,6 +66,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const { user, error } = requireRole(request, 'ADMIN');
+  if (error) return error;
+
   let authUserId = null;
 
   try {

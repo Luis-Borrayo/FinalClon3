@@ -1,7 +1,11 @@
+import { requireRole } from '@/lib/jwt';
 export const dynamic = 'force-dynamic';
 import prisma from "@/lib/prisma-academico";
 
 export async function GET(request) {
+  const { user, error } = requireRole(request, 'ADMIN', 'TEACHER', 'STUDENT');
+  if (error) return error;
+
   try {
     const { searchParams } = new URL(request.url);
     const carreraId = searchParams.get("carreraId");
@@ -27,6 +31,9 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const { user, error } = requireRole(request, 'ADMIN');
+  if (error) return error;
+
   try {
     const body = await request.json();
     const { carreraId, nombre, version, totalCreditos } = body;

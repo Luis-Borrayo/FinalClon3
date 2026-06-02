@@ -1,8 +1,12 @@
+import { requireRole } from '@/lib/jwt';
 export const dynamic = 'force-dynamic';
 import prisma from '@/lib/prisma';
 import * as res from '@/lib/response';
 
 export async function GET(request, { params }) {
+  const { user, error } = requireRole(request, 'ADMIN', 'TEACHER', 'STUDENT', 'SECURITY');
+  if (error) return error;
+
   try {
     const { id } = await params;
     const space = await prisma.parkingSpace.findUnique({
@@ -17,6 +21,9 @@ export async function GET(request, { params }) {
 }
 
 export async function PATCH(request, { params }) {
+  const { user, error } = requireRole(request, 'ADMIN', 'SECURITY');
+  if (error) return error;
+
   try {
     const { id } = await params;
     const dto = await request.json();
@@ -28,6 +35,9 @@ export async function PATCH(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
+  const { user, error } = requireRole(request, 'ADMIN', 'SECURITY');
+  if (error) return error;
+
   try {
     const { id } = await params;
     await prisma.parkingSpace.delete({ where: { id } });

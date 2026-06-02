@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/jwt';
 export const dynamic = 'force-dynamic';
 import prisma from '@/lib/prisma-otras';
 import * as res from '@/lib/response';
@@ -34,6 +35,9 @@ function toFrontend(a) {
 }
 
 export async function PATCH(request, { params }) {
+  const { user, error } = requireRole(request, 'ADMIN', 'TEACHER', 'STUDENT');
+  if (error) return error;
+
   try {
     const codigo = params.id;
     const dto = await request.json();

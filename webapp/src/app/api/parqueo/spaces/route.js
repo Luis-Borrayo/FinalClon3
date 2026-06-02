@@ -1,8 +1,12 @@
+import { requireRole } from '@/lib/jwt';
 export const dynamic = 'force-dynamic';
 import prisma from '@/lib/prisma';
 import * as res from '@/lib/response';
 
 export async function GET(request) {
+  const { user, error } = requireRole(request, 'ADMIN', 'TEACHER', 'STUDENT', 'SECURITY');
+  if (error) return error;
+
   const { searchParams } = new URL(request.url);
   const zone = searchParams.get('zone');
   const type = searchParams.get('type');
@@ -28,6 +32,9 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const { user, error } = requireRole(request, 'ADMIN');
+  if (error) return error;
+
   try {
     const dto = await request.json();
     const exists = await prisma.parkingSpace.findUnique({ where: { code: dto.code } });

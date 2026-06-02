@@ -1,10 +1,14 @@
+import { requireRole } from '@/lib/jwt';
 export const dynamic = 'force-dynamic';
 import prismaAcademico from "@/lib/prisma-academico";
 import prismaAuth from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
-export async function GET() {
+export async function GET(request) {
+  const { user, error } = requireRole(request, 'ADMIN');
+  if (error) return error;
+
   try {
     const catedraticos = await prismaAcademico.catedraticoAcademico.findMany({
       orderBy: { createdAt: "desc" },
@@ -17,6 +21,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const { user, error } = requireRole(request, 'ADMIN');
+  if (error) return error;
+
   let authUserId = null;
 
   try {

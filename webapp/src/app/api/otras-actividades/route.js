@@ -1,3 +1,4 @@
+import { requireRole } from '@/lib/jwt';
 export const dynamic = 'force-dynamic';
 import prisma from '@/lib/prisma-otras';
 import * as res from '@/lib/response';
@@ -33,7 +34,10 @@ function toFrontend(a) {
 
 const includeInscripciones = { inscripciones: { select: { email: true, user_id: true } } };
 
-export async function GET() {
+export async function GET(request) {
+  const { user, error } = requireRole(request, 'ADMIN', 'TEACHER', 'STUDENT', 'SECURITY');
+  if (error) return error;
+
   try {
     const actividades = await prisma.actividad.findMany({
       orderBy: { created_at: 'desc' },
@@ -46,6 +50,9 @@ export async function GET() {
 }
 
 export async function POST(request) {
+  const { user, error } = requireRole(request, 'ADMIN', 'TEACHER');
+  if (error) return error;
+
   try {
     const dto = await request.json();
     if (!dto.nombre?.trim() || !dto.fecha || !dto.horaInicio) {

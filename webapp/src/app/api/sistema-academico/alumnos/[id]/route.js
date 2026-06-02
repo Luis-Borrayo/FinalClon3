@@ -1,7 +1,11 @@
+import { requireRole } from '@/lib/jwt';
 export const dynamic = 'force-dynamic';
 import prisma from "@/lib/prisma-academico";
 
 export async function DELETE(request, { params }) {
+  const { user, error } = requireRole(request, 'ADMIN');
+  if (error) return error;
+
   try {
     const { id: rawId } = await params;
     const id = parseInt(rawId);

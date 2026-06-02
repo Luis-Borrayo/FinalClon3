@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma-laboratorios'
 import { revalidatePath } from 'next/cache'
+import { requireServerRole } from '@/lib/server-auth'
 
 const labInclude = {
   configuraciones: { where: { activo: true }, orderBy: { orden: 'asc' } },
@@ -111,6 +112,7 @@ export async function getLaboratorioById(id) {
 
 export async function crearLaboratorio(formData) {
   try {
+    await requireServerRole('ADMIN', 'TEACHER')
     const nombre = String(formData.get('nombre') || '').trim()
     const codigo = String(formData.get('codigo') || '').trim().toUpperCase()
     const descripcion = String(formData.get('descripcion') || '').trim() || null
@@ -167,6 +169,7 @@ export async function crearLaboratorio(formData) {
 
 export async function actualizarLaboratorio(id, formData) {
   try {
+    await requireServerRole('ADMIN', 'TEACHER')
     await prisma.laboratorio.update({
       where: { id: Number(id) },
       data: {
@@ -188,6 +191,7 @@ export async function actualizarLaboratorio(id, formData) {
 
 export async function cambiarEstadoLaboratorio(id, nuevoEstado) {
   try {
+    await requireServerRole('ADMIN')
     await prisma.laboratorio.update({
       where: { id: Number(id) },
       data: { estado: nuevoEstado },
@@ -203,6 +207,7 @@ export async function cambiarEstadoLaboratorio(id, nuevoEstado) {
 
 export async function crearEquipo(laboratorioId, formData) {
   try {
+    await requireServerRole('ADMIN')
     await prisma.equipo.create({
       data: {
         laboratorioId: Number(laboratorioId),
@@ -275,6 +280,7 @@ export async function crearReserva(formData) {
 
 export async function resolverReserva(reservaId, accion, motivo = '') {
   try {
+    await requireServerRole('ADMIN', 'TEACHER')
     const tecnico = await prisma.usuario.findFirst({ where: { rol: 'TECNICO' } })
     const data =
       accion === 'aprobar'
@@ -303,6 +309,7 @@ export async function resolverReserva(reservaId, accion, motivo = '') {
 
 export async function registrarPago(formData) {
   try {
+    await requireServerRole('ADMIN')
     await prisma.pago.create({
       data: {
         usuarioId: String(formData.get('usuarioId')),
