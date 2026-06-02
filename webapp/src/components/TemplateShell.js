@@ -20,6 +20,7 @@ export default function TemplateShell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isDark, setIsDark] = useState(true);
+  const [nombreUsuario, setNombreUsuario] = useState("");
 
   useEffect(() => {
     if (isDark) {
@@ -28,6 +29,17 @@ export default function TemplateShell({ children }) {
       document.body.classList.remove('dark-mode');
     }
   }, [isDark]);
+
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const nombre = payload.nombre || payload.name || payload.sub || "";
+        setNombreUsuario(nombre);
+      }
+    } catch (_) {}
+  }, []);
 
   const toggleTheme = () => setIsDark(!isDark);
 
@@ -128,20 +140,27 @@ export default function TemplateShell({ children }) {
             
             <i className="fa fa-bell-o" style={{ color: isDark ? '#aaa' : '#555', fontSize: '16px', cursor: 'pointer' }}></i>
             
-            <div style={{
-              width: '34px',
-              height: '34px',
-              borderRadius: '50%',
-              background: '#800020',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}>
-              <i className="fa fa-user" style={{ fontSize: '16px' }}></i>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {nombreUsuario && (
+                <span style={{ color: isDark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.75)', fontSize: '14px', fontWeight: 500 }}>
+                  {nombreUsuario}
+                </span>
+              )}
+              <div style={{
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                background: '#800020',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontWeight: 700,
+                fontSize: '14px',
+                cursor: 'pointer',
+              }}>
+                <i className="fa fa-user" style={{ fontSize: '16px' }}></i>
+              </div>
             </div>
           </div>
         </div>
