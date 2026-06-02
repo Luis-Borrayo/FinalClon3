@@ -22,8 +22,15 @@ export function verifyRefresh(token) {
 }
 
 export function getTokenFromRequest(request) {
+  // 1. Authorization header (Bearer token)
   const auth = request.headers.get('authorization') ?? '';
   if (auth.startsWith('Bearer ')) return auth.slice(7);
+
+  // 2. Cookie access_token (login sets HttpOnly cookie)
+  const cookieHeader = request.headers.get('cookie') ?? '';
+  const match = cookieHeader.match(/(?:^|;\s*)access_token=([^;]+)/);
+  if (match) return decodeURIComponent(match[1]);
+
   return null;
 }
 

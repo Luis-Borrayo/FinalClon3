@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma-otras';
 import * as res from '@/lib/response';
 
 function toFrontend(a) {

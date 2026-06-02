@@ -1,5 +1,5 @@
 export const dynamic = 'force-dynamic';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma-otras';
 import * as res from '@/lib/response';
 
 const includeInscripciones = { inscripciones: { select: { email: true, user_id: true } } };
