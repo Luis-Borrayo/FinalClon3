@@ -19,6 +19,7 @@ const tabs = [
   { label: "Suscripciones",  path: "/parqueo/suscripciones",    icon: "fa-id-card"    },
   { label: "Notificaciones", path: "/parqueo/notificaciones",   icon: "fa-bell", badge: true },
   { label: "Mi QR",          path: "/parqueo/mi-qr",            icon: "fa-qrcode" },
+  { label: "Benchmark",      path: "/parqueo/benchmark",        icon: "fa-bolt"   },
 ];
 
 export default function ParqueoLayout({ children }) {
