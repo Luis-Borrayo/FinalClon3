@@ -1,16 +1,22 @@
-export default function Administracion() {
+// src/app/administracion/page.js
+import { redirect } from 'next/navigation'
+import { getServerUser } from '@/lib/server-auth'
+import { getDashboardAdminData } from './actions'
+import AdministracionDashboard from './AdministracionDashboard'
+import { ToastProvider } from './components/ToastProvider'
+
+export const metadata = {
+  title: 'Administración de Espacios — USPG',
+}
+
+export default async function AdministracionPage() {
+  const user = await getServerUser()
+  if (!user || !['ADMIN', 'TEACHER', 'STUDENT'].includes(user.role)) redirect('/login')
+
+  const data = await getDashboardAdminData()
   return (
-    <div className="row clearfix">
-      <div className="col-lg-12">
-        <div className="card">
-          <div className="card-header">
-            <h3 className="card-title">Administración</h3>
-          </div>
-          <div className="card-body">
-            <p>Módulo en construcción...</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    <ToastProvider>
+      <AdministracionDashboard initialData={data} userRole={user.role} />
+    </ToastProvider>
+  )
 }

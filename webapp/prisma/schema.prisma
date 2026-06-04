@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["auth", "grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios", "grupo9_otras_actividades"]
+  schemas  = ["auth", "grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios", "grupo9_otras_actividades", "grupo8_administracion", "notas"]
 }
 
 enum Role {
@@ -1191,4 +1191,226 @@ model InscripcionActividad {
   @@unique([actividad_id, user_id])
   @@map("inscripcion_actividad")
   @@schema("grupo9_otras_actividades")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRUPO 8 — Administración de Espacios
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum TipoEspacio {
+  SALON
+  AUDITORIO
+  LABORATORIO_ADMIN
+  SALA_REUNIONES
+  CANCHA
+  OTRO
+
+  @@schema("grupo8_administracion")
+}
+
+enum EstadoEspacio {
+  DISPONIBLE
+  OCUPADO
+  MANTENIMIENTO
+  FUERA_DE_SERVICIO
+
+  @@schema("grupo8_administracion")
+}
+
+enum EstadoReservaEspacio {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  CANCELADA
+
+  @@schema("grupo8_administracion")
+}
+
+enum TipoElemento {
+  AIRE_ACONDICIONADO
+  PROYECTOR
+  ILUMINACION
+  MOBILIARIO
+  PUERTA_VENTANA
+  SANITARIO
+  OTRO
+
+  @@schema("grupo8_administracion")
+}
+
+enum PrioridadReporte {
+  BAJA
+  MEDIA
+  ALTA
+  URGENTE
+
+  @@schema("grupo8_administracion")
+}
+
+enum EstadoReporte {
+  ABIERTO
+  EN_PROCESO
+  RESUELTO
+  CERRADO
+
+  @@schema("grupo8_administracion")
+}
+
+model Espacio {
+  id                    Int       @id @default(autoincrement())
+  codigo                String    @unique
+  nombre                String
+  descripcion           String?
+  tipo                  TipoEspacio
+  capacidad             Int
+  ubicacion             String
+  piso                  Int?
+  tieneProyector        Boolean   @default(false)
+  tieneAireAcondicionado Boolean  @default(false)
+  tieneInternetWifi     Boolean   @default(false)
+  tienePizarron         Boolean   @default(false)
+  tienePizarronDigital  Boolean   @default(false)
+  notasRecursos         String?
+  estado                EstadoEspacio @default(DISPONIBLE)
+  activo                Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  reservasEspacio       ReservaEspacio[]
+  reportesMantenimiento ReporteMantenimiento[]
+
+  @@schema("grupo8_administracion")
+}
+
+model ReservaEspacio {
+  id              Int                  @id @default(autoincrement())
+  espacioId       Int
+  solicitanteId   String
+  titulo          String
+  proposito       String
+  fechaInicio     DateTime
+  fechaFin        DateTime
+  cantidadPersonas Int
+  recurrente      Boolean              @default(false)
+  diasRecurrencia String?
+  notas           String?
+  estado          EstadoReservaEspacio @default(PENDIENTE)
+  motivoRechazo   String?
+  createdAt       DateTime             @default(now())
+
+  espacio         Espacio @relation(fields: [espacioId], references: [id], onDelete: Cascade)
+
+  @@schema("grupo8_administracion")
+}
+
+model ReporteMantenimiento {
+  id               Int              @id @default(autoincrement())
+  espacioId        Int?
+  reportadoPorId   String
+  titulo           String
+  descripcion      String
+  tipoElemento     TipoElemento
+  prioridad        PrioridadReporte @default(MEDIA)
+  estado           EstadoReporte    @default(ABIERTO)
+  notasResolucion  String?
+  fechaResolucion  DateTime?
+  createdAt        DateTime         @default(now())
+
+  espacio          Espacio? @relation(fields: [espacioId], references: [id], onDelete: SetNull)
+
+  @@schema("grupo8_administracion")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRUPO 2 — Control de Notas (schema: notas)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Matricula {
+  id_matricula   Int      @id @default(autoincrement())
+  id_alumno      Int
+  id_curso       Int
+  periodo        String   @db.VarChar(10)
+  fecha_registro DateTime @default(now())
+
+  notas       NotaAcademica[]
+  asistencias AsistenciaAcademica[]
+  cierre      CierreNotas?
+
+  @@unique([id_alumno, id_curso, periodo])
+  @@index([id_alumno])
+  @@index([id_curso])
+  @@schema("notas")
+}
+
+model EvaluacionAcademica {
+  id_evaluacion Int     @id @default(autoincrement())
+  id_curso      Int
+  nombre        String  @db.VarChar(80)
+  porcentaje    Decimal @db.Decimal(5, 2)
+  periodo       String  @db.VarChar(10)
+
+  notas NotaAcademica[]
+
+  @@map("evaluacion")
+  @@schema("notas")
+}
+
+model NotaAcademica {
+  id_nota        Int      @id @default(autoincrement())
+  id_matricula   Int
+  id_evaluacion  Int
+  valor          Decimal  @db.Decimal(5, 2)
+  fecha_registro DateTime @default(now())
+  registrado_por String   @db.VarChar(50)
+
+  matricula  Matricula           @relation(fields: [id_matricula], references: [id_matricula])
+  evaluacion EvaluacionAcademica @relation(fields: [id_evaluacion], references: [id_evaluacion])
+  auditoria  AuditoriaNotaAcademica[]
+
+  @@unique([id_matricula, id_evaluacion])
+  @@map("nota")
+  @@schema("notas")
+}
+
+model AsistenciaAcademica {
+  id_asistencia Int      @id @default(autoincrement())
+  id_matricula  Int
+  fecha         DateTime @db.Date
+  presente      Boolean  @default(false)
+  origen        String   @default("manual") @db.VarChar(10)
+
+  matricula Matricula @relation(fields: [id_matricula], references: [id_matricula])
+
+  @@unique([id_matricula, fecha])
+  @@map("asistencia")
+  @@schema("notas")
+}
+
+model CierreNotas {
+  id_cierre          Int       @id @default(autoincrement())
+  id_matricula       Int       @unique
+  nota_final         Decimal?  @db.Decimal(5, 2)
+  estado             String    @default("pendiente") @db.VarChar(15)
+  fecha_cierre       DateTime?
+  solvencia_validada Boolean   @default(false)
+
+  matricula Matricula @relation(fields: [id_matricula], references: [id_matricula])
+
+  @@map("cierre")
+  @@schema("notas")
+}
+
+model AuditoriaNotaAcademica {
+  id_auditoria   Int      @id @default(autoincrement())
+  id_nota        Int
+  usuario        String   @db.VarChar(50)
+  fecha_cambio   DateTime @default(now())
+  valor_anterior Decimal? @db.Decimal(5, 2)
+  valor_nuevo    Decimal  @db.Decimal(5, 2)
+  motivo         String?
+
+  nota NotaAcademica @relation(fields: [id_nota], references: [id_nota])
+
+  @@map("auditoria_nota")
+  @@schema("notas")
 }

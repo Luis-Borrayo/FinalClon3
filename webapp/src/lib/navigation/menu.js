@@ -7,7 +7,7 @@ const ALL_ITEMS = [
   { name: 'Parqueo',                     path: '/parqueo',                   icon: 'fa-car',         roles: ['ADMIN','TEACHER','STUDENT','SECURITY','VISITOR'] },
   { name: 'Pagos Alumnos',              path: '/pagos-alumnos',             icon: 'fa-money',       roles: ['ADMIN','STUDENT'] },
   { name: 'Servicios Móviles e Integrador', path: '/servicios-moviles-integrador', icon: 'fa-mobile', roles: ['ADMIN'] },
-  { name: 'Administración',             path: '/administracion',            icon: 'fa-cogs',        roles: ['ADMIN'] },
+  { name: 'Administración',             path: '/administracion',            icon: 'fa-cogs',        roles: ['ADMIN','TEACHER','STUDENT'] },
   { name: 'Otras actividades',          path: '/otras-actividades',         icon: 'fa-star',        roles: ['ADMIN','TEACHER','STUDENT'] },
 ];
 
