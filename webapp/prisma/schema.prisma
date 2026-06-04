@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  schemas  = ["auth", "grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios", "grupo9_otras_actividades"]
+  schemas  = ["auth", "grupo5_parqueo", "grupo1_academico", "grupo3_laboratorios", "grupo9_otras_actividades", "grupo8_administracion"]
 }
 
 enum Role {
@@ -1191,4 +1191,128 @@ model InscripcionActividad {
   @@unique([actividad_id, user_id])
   @@map("inscripcion_actividad")
   @@schema("grupo9_otras_actividades")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GRUPO 8 — Administración de Espacios
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum TipoEspacio {
+  AUDITORIO
+  LABORATORIO_ADMIN
+  SALA_REUNIONES
+  CANCHA
+  OTRO
+
+  @@schema("grupo8_administracion")
+}
+
+enum EstadoEspacio {
+  DISPONIBLE
+  OCUPADO
+  MANTENIMIENTO
+  FUERA_DE_SERVICIO
+
+  @@schema("grupo8_administracion")
+}
+
+enum EstadoReservaEspacio {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  CANCELADA
+
+  @@schema("grupo8_administracion")
+}
+
+enum TipoElemento {
+  AIRE_ACONDICIONADO
+  PROYECTOR
+  MOBILIARIO
+  OTRO
+
+  @@schema("grupo8_administracion")
+}
+
+enum PrioridadReporte {
+  BAJA
+  MEDIA
+  ALTA
+  URGENTE
+
+  @@schema("grupo8_administracion")
+}
+
+enum EstadoReporte {
+  ABIERTO
+  EN_PROCESO
+  RESUELTO
+  CERRADO
+
+  @@schema("grupo8_administracion")
+}
+
+model Espacio {
+  id                    Int       @id @default(autoincrement())
+  codigo                String    @unique
+  nombre                String
+  descripcion           String?
+  tipo                  TipoEspacio
+  capacidad             Int
+  ubicacion             String
+  piso                  Int?
+  tieneProyector        Boolean   @default(false)
+  tieneAireAcondicionado Boolean  @default(false)
+  tieneInternetWifi     Boolean   @default(false)
+  tienePizarron         Boolean   @default(false)
+  tienePizarronDigital  Boolean   @default(false)
+  notasRecursos         String?
+  estado                EstadoEspacio @default(DISPONIBLE)
+  activo                Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  reservasEspacio       ReservaEspacio[]
+  reportesMantenimiento ReporteMantenimiento[]
+
+  @@schema("grupo8_administracion")
+}
+
+model ReservaEspacio {
+  id              Int                  @id @default(autoincrement())
+  espacioId       Int
+  solicitanteId   String
+  titulo          String
+  proposito       String
+  fechaInicio     DateTime
+  fechaFin        DateTime
+  cantidadPersonas Int
+  recurrente      Boolean              @default(false)
+  diasRecurrencia String?
+  notas           String?
+  estado          EstadoReservaEspacio @default(PENDIENTE)
+  motivoRechazo   String?
+  createdAt       DateTime             @default(now())
+
+  espacio         Espacio @relation(fields: [espacioId], references: [id], onDelete: Cascade)
+
+  @@schema("grupo8_administracion")
+}
+
+model ReporteMantenimiento {
+  id               Int              @id @default(autoincrement())
+  espacioId        Int?
+  reportadoPorId   String
+  titulo           String
+  descripcion      String
+  tipoElemento     TipoElemento
+  prioridad        PrioridadReporte @default(MEDIA)
+  estado           EstadoReporte    @default(ABIERTO)
+  notasResolucion  String?
+  fechaResolucion  DateTime?
+  createdAt        DateTime         @default(now())
+
+  espacio          Espacio? @relation(fields: [espacioId], references: [id], onDelete: SetNull)
+
+  @@schema("grupo8_administracion")
 }
