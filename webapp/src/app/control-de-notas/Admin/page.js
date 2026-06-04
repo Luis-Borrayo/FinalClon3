@@ -333,10 +333,10 @@ export default function AdminPage() {
   ];
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("cn_usuario");
-    if (!raw) { window.location.href = "/control-de-notas"; return; }
+    const raw = localStorage.getItem("user");
+    if (!raw) { window.location.href = "/login"; return; }
     const u = JSON.parse(raw);
-    if (u.rol !== "ADMIN") { window.location.href = "/control-de-notas"; return; }
+    if (u.role !== "ADMIN") { window.location.href = "/login"; return; }
     setUsuario(u);
     intentarCargarGrupo1();
   }, []);

@@ -97,10 +97,10 @@ export default function EstudiantePage() {
   const [toastVisible,  setToastVisible]  = useState({ solvencia: false });
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("cn_usuario");
-    if (!raw) { window.location.href = "/control-de-notas"; return; }
+    const raw = localStorage.getItem("user");
+    if (!raw) { window.location.href = "/login"; return; }
     const u = JSON.parse(raw);
-    if (u.rol !== "ALUMNO") { window.location.href = "/control-de-notas"; return; }
+    if (u.role !== "STUDENT") { window.location.href = "/login"; return; }
     setUsuario(u);
     cargarDatos(u.id);
   }, []);
