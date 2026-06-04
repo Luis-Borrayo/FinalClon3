@@ -4,7 +4,10 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+  schemas = ["laboratorios", "grupo1_academico", "pago_alumnos"]
 }
 
 enum RolUsuario {
@@ -474,4 +477,130 @@ model CursoPlan {
   obligatorio   Boolean     @default(true)
 
   @@unique([planEstudioId, cursoId])
+}
+
+// ─── Tablas Pago Alumnos ─────────────────────────────────────────────────────
+model FormaPago {
+  id_forma_pago Int    @id @default(autoincrement())
+  nombre        String @map("Nombre")
+  descripcion   String? @map("Descripcion")
+
+  matriculas    Matricula[]
+  mensualidades Mensualidad[]
+  pagosVarios   PagosVarios[]
+
+  @@map("forma_pago")
+}
+
+model Matricula {
+  id_matricula  Int      @id @default(autoincrement())
+  carnet        String
+  ciclo         String   @map("Ciclo")
+  anio          Int      @map("Anio")
+  fechaPago     DateTime @map("Fecha_pago") @db.Date
+  precio        Decimal  @db.Decimal(10, 2)
+  idFormaPago   Int      @map("id_forma_pago")
+  estado        String   @default("Pendiente") @map("Estado")
+
+  formaPago     FormaPago @relation(fields: [idFormaPago], references: [id_forma_pago])
+
+  @@unique([carnet, ciclo, anio])
+  @@map("matricula")
+}
+
+model Mensualidad {
+  id_mensualidad  Int      @id @default(autoincrement())
+  carnet          String
+  mes             String   @map("Mes")
+  fechaPago       DateTime? @map("Fecha_Pago") @db.Date
+  fechaLimite     DateTime @map("Fecha_limite") @db.Date
+  precio          Decimal  @db.Decimal(10, 2)
+  idFormaPago     Int      @map("id_forma_pago")
+  estadoPago      String   @default("Pendiente") @map("Estado_pago")
+  montoMora       Decimal  @default(0.00) @map("Monto_mora") @db.Decimal(10, 2)
+  diasMora        Int      @default(0) @map("Dias_mora")
+
+  formaPago       FormaPago @relation(fields: [idFormaPago], references: [id_forma_pago])
+  solvenciasMensuales SolvenciaMensual[]
+
+  @@map("mensualidad")
+}
+
+model PagosVarios {
+  id_pagos_varios Int      @id @default(autoincrement())
+  carnet          String
+  motivoPago      String   @map("Motivo_pago")
+  monto           Decimal  @db.Decimal(10, 2)
+  fechaPago       DateTime @map("Fecha_pago") @db.Date
+  idFormaPago     Int      @map("id_forma_pago")
+  estado          String   @default("Registrado") @map("Estado")
+
+  formaPago       FormaPago @relation(fields: [idFormaPago], references: [id_forma_pago])
+
+  @@map("pagos_varios")
+}
+
+model Recibos {
+  id_recibo         Int      @id @default(autoincrement())
+  carnet            String
+  idReferencia      Int      @map("id_referencia")
+  tipoReferencia    String   @map("tipo_referencia")
+  fechaEmision      DateTime @default(now()) @map("Fecha_emision") @db.Date
+  montoTotal        Decimal  @db.Decimal(10, 2) @map("Monto_total")
+  estadoValidacion  String   @default("Emitido") @map("Estado_validacion")
+
+  comprobantes      ComprobantePago[]
+
+  @@map("recibos")
+}
+
+model ComprobantePago {
+  id_comprobante    Int      @id @default(autoincrement())
+  idRecibo          Int      @map("id_recibo")
+  archivoUrl        String?  @map("archivo_url")
+  numTransferencia  String?  @map("num_transferencia")
+  bancoOrigen       String?  @map("banco_origen")
+  fechaAdjunto      DateTime @default(now()) @map("fecha_adjunto") @db.Date
+  estado            String   @default("Pendiente")
+  observacion       String?
+
+  recibo            Recibos @relation(fields: [idRecibo], references: [id_recibo])
+
+  @@map("comprobante_pago")
+}
+
+model SolvenciaMensual {
+  id_solvencia_mensual Int    @id @default(autoincrement())
+  idMensualidad        Int    @map("id_mensualidad")
+  estado               String @default("No Solvente") @map("Estado")
+
+  mensualidad          Mensualidad @relation(fields: [idMensualidad], references: [id_mensualidad])
+  solvencias           Solvencia[]
+
+  @@map("solvenciamensual")
+}
+
+model Solvencia {
+  id_solvencia          Int      @id @default(autoincrement())
+  carnet                String
+  idSolvenciaMensual    Int      @map("id_solvencia_mensual")
+  estado                String   @default("No Solvente") @map("Estado")
+  fechaEmision          DateTime @default(now()) @map("Fecha_emision") @db.Date
+  corte                 String   @map("Corte")
+
+  solvenciaMensual      SolvenciaMensual @relation(fields: [idSolvenciaMensual], references: [id_solvencia_mensual])
+
+  @@map("solvencia")
+}
+
+model DeudaExterna {
+  id_deuda      Int      @id @default(autoincrement())
+  carnet        String
+  concepto      String   @map("Concepto")
+  monto         Decimal  @db.Decimal(10, 2) @map("Monto")
+  estado        String   @default("Pendiente") @map("Estado")
+  fechaReporte  DateTime @default(now()) @map("Fecha_reporte") @db.Date
+  grupoOrigen   String?  @map("Grupo_origen")
+
+  @@map("deuda_externa")
 }

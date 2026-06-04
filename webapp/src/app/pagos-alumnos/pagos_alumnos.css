@@ -1,0 +1,183 @@
+/* ── pagos-alumnos.css ───────────────────────────────────────────────────────
+   Estilos específicos de la página de Pagos Alumnos.
+   Depende de globals.css (variables --uspg-* y clases lab-*)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Layout */
+.pa-wrap { padding: 1.5rem; }
+
+/* ── Header ─────────────────────────────────────────────────────────────────*/
+.pa-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
+.pa-header h1 { font-size:1.8rem; font-weight:700; margin:0; color: var(--uspg-text); }
+.pa-nav { display:flex; gap:0.5rem; }
+.pa-nav a {
+    display:flex; flex-direction:column; align-items:center;
+    padding:0.5rem 1rem; border-radius:8px;
+    background: var(--uspg-surface-2);
+    color: var(--uspg-text);
+    text-decoration:none; font-size:0.75rem; gap:4px; cursor:pointer;
+    border:1px solid rgba(128,128,128,0.15);
+    transition: background 0.2s, color 0.2s;
+}
+.pa-nav a:hover { background: var(--uspg-corinto); color: white; }
+
+/* ── Stats grid ──────────────────────────────────────────────────────────── */
+.pa-stats { display:grid; grid-template-columns:1fr 1fr 1fr 2fr; gap:1rem; margin-bottom:1.5rem; }
+.pa-stat {
+    background: var(--uspg-surface);
+    border-radius:10px; padding:1.2rem; text-align:center;
+    border:1px solid rgba(128,128,128,0.12);
+}
+.pa-stat .val { font-size:1.4rem; font-weight:700; color: var(--uspg-corinto); }
+.pa-stat .lbl { font-size:0.7rem; text-transform:uppercase; color: var(--uspg-muted); margin-top:4px; }
+
+/* ── Registrar pagos ─────────────────────────────────────────────────────── */
+.pa-reg { background: var(--uspg-corinto); border-radius:10px; padding:1rem; }
+.pa-reg .reg-title { color:white; font-weight:700; text-align:center; margin-bottom:0.8rem; font-size:0.9rem; letter-spacing:0.05em; }
+.pa-reg-btns { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem; }
+.pa-reg-btn {
+    background:rgba(255,255,255,0.15); border:none; border-radius:8px;
+    color:white; padding:0.6rem 0.3rem; cursor:pointer;
+    font-size:0.7rem; display:flex; flex-direction:column;
+    align-items:center; gap:4px; transition:background 0.2s;
+}
+.pa-reg-btn:hover { background:rgba(255,255,255,0.3); }
+.pa-reg-btn i { font-size:1.2rem; }
+
+/* ── Tabla header ────────────────────────────────────────────────────────── */
+.pa-table-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem; }
+.pa-table-header h3 { margin:0; font-size:1rem; font-weight:600; color: var(--uspg-text); }
+.pa-search {
+    border:2px solid rgba(128,128,128,0.2); border-radius:20px;
+    padding:0.3rem 0.8rem; font-size:0.85rem;
+    background:transparent; color: var(--uspg-text); outline:none;
+    transition: border-color 0.2s;
+}
+.pa-search:focus { border-color: var(--uspg-corinto); }
+
+/* ── Modal: título y layout interno ─────────────────────────────────────── */
+.pa-modal-title {
+    text-align:center; font-size:1.3rem; font-weight:700;
+    margin-bottom:1.2rem; color: var(--uspg-corinto);
+}
+.pa-modal-row { display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; margin-bottom:0.6rem; }
+.pa-modal-btns { display:flex; gap:1rem; margin-top:1.2rem; justify-content:center; }
+
+/* ── FIX: botón Guardar visible en ambos modos ───────────────────────────── */
+/* En modo claro --lab-corinto puede no estar definido, forzamos el corinto USPG */
+.pa-modal-btns .lab-btn-primary {
+    background: #800020 !important;
+    color: #ffffff !important;
+    border: none;
+}
+.pa-modal-btns .lab-btn-primary:hover {
+    background: #9a0026 !important;
+}
+.pa-modal-btns .lab-btn-danger {
+    background: #b91c1c !important;
+}
+.pa-modal-btns .lab-btn-danger:hover {
+    background: #991b1b !important;
+}
+
+/* ── FIX: inputs del modal visibles en modo claro ────────────────────────── */
+/* globals.css pone color:#e0e0e0 en .lab-input sin distinción de contexto   */
+.lab-modal .lab-input {
+    color: #1a1a2e;
+    background: #f8f9fa;
+    border-color: rgba(0,0,0,0.15);
+}
+.dark-mode .lab-modal .lab-input {
+    color: #e0e0e0;
+    background: #1a1a2e;
+    border-color: rgba(255,255,255,0.12);
+}
+.lab-modal .lab-input::placeholder {
+    color: #9ca3af;
+}
+.dark-mode .lab-modal .lab-input::placeholder {
+    color: #6b7280;
+}
+.lab-modal select.lab-input {
+    color: #1a1a2e;
+}
+.dark-mode .lab-modal select.lab-input {
+    color: #e0e0e0;
+}
+
+/* ── FIX: modal oscuro en dark-mode ─────────────────────────────────────── */
+.dark-mode .lab-modal {
+    background: #1a1a2e;
+    border-color: rgba(255,255,255,0.08);
+}
+
+/* ── Inputs con variante de color (complementan lab-input) ──────────────── */
+.pa-inp-full   { margin-bottom:0.6rem; display:block; }
+.pa-inp-green  { border-color:#90EE90 !important; background:rgba(144,238,144,0.08) !important; }
+.pa-inp-purple { border-color:#DDA0DD !important; background:rgba(221,160,221,0.08) !important; }
+.pa-inp-orange { border-color:#FFB347 !important; background:rgba(255,179,71,0.08) !important; }
+
+/* En modo claro los colores de variante necesitan más contraste */
+body:not(.dark-mode) .pa-inp-green  { background:rgba(144,238,144,0.12) !important; }
+body:not(.dark-mode) .pa-inp-purple { background:rgba(221,160,221,0.12) !important; }
+body:not(.dark-mode) .pa-inp-orange { background:rgba(255,179,71,0.12) !important; }
+
+/* ── Badges ─────────────────────────────────────────────────────────────── */
+.badge-activo   { background:#d4edda; color:#155724; padding:2px 8px; border-radius:10px; font-size:0.72rem; font-weight:600; }
+.badge-inactivo { background:#f8d7da; color:#721c24; padding:2px 8px; border-radius:10px; font-size:0.72rem; font-weight:600; }
+
+/* ── No. de forms: input de solo lectura con estilo de ID ────────────────── */
+.pa-inp-id {
+    color: var(--uspg-corinto) !important;
+    background: rgba(128,0,32,0.08) !important;
+    border-color: var(--uspg-corinto) !important;
+    font-weight: 700;
+    cursor: default;
+}
+.dark-mode .pa-inp-id {
+    background: rgba(128,0,32,0.18) !important;
+    color: #ff6b8a !important;
+    border-color: #ff6b8a !important;
+}
+
+/* ── FIX: selects con variante de color en dark-mode ────────────────────── */
+/* Sin esto el navegador pone fondo blanco nativo en los <select>            */
+.dark-mode .lab-modal select.lab-input {
+    color-scheme: dark;
+    color: #e0e0e0 !important;
+    background-color: #1a1a2e !important;
+    border-color: rgba(255,255,255,0.12) !important;
+}
+.dark-mode .lab-modal select.lab-input.pa-inp-purple {
+    background-color: rgba(221,160,221,0.10) !important;
+    border-color: #DDA0DD !important;
+    color: #e0e0e0 !important;
+}
+.dark-mode .lab-modal select.lab-input.pa-inp-green {
+    background-color: rgba(144,238,144,0.10) !important;
+    border-color: #90EE90 !important;
+    color: #e0e0e0 !important;
+}
+.dark-mode .lab-modal select.lab-input.pa-inp-orange {
+    background-color: rgba(255,179,71,0.10) !important;
+    border-color: #FFB347 !important;
+    color: #e0e0e0 !important;
+}
+/* Opciones del desplegable nativo */
+.dark-mode .lab-modal select.lab-input option {
+    background-color: #1a1a2e;
+    color: #e0e0e0;
+}
+/* Modo claro: opciones */
+.lab-modal select.lab-input option {
+    background-color: #ffffff;
+    color: #1a1a2e;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────    */
+@media(max-width:768px) {
+    .pa-stats    { grid-template-columns:1fr 1fr; }
+    .pa-reg-btns { grid-template-columns:1fr 1fr; }
+    .lab-table   { font-size:0.75rem; }
+    .pa-modal-row { grid-template-columns:1fr; }
+}
