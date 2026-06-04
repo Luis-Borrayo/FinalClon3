@@ -438,7 +438,6 @@ export default function AdminPage() {
                 }}>
                   {cargandoG1 ? "⏳" : "🔄"} Actualizar
                 </button>
-                <a href="/control-de-notas" style={{ color: "#888", fontSize: "13px" }}>🚪 Salir</a>
               </div>
             </div>
 

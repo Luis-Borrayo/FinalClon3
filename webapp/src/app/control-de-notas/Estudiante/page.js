@@ -145,7 +145,6 @@ export default function EstudiantePage() {
   if (error) return (
     <div style={{ textAlign: "center", padding: "60px" }}>
       <p style={{ color: "#c62828", fontSize: "16px" }}>⚠️ {error}</p>
-      <a href="/control-de-notas" style={{ color: "#800020" }}>← Volver al login</a>
     </div>
   );
 
@@ -189,7 +188,6 @@ export default function EstudiantePage() {
               >
                 {solvGeneral ? "✅" : "⚠️"} Solvencia
               </button>
-              <a href="/control-de-notas" style={{ color: "#888", fontSize: "13px" }}>🚪 Salir</a>
             </div>
           </div>
 

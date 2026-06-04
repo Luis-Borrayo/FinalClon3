@@ -214,7 +214,6 @@ export default function ProfesorPage() {
                 }}>
                   ✏️ {alumnosMock.length} alumnos en sistema
                 </span>
-                <a href="/control-de-notas" style={{ color: "#888", fontSize: "13px" }}>🚪 Salir</a>
               </div>
             </div>
 
