@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { crearReporteMantenimiento } from '../actions'
 
 const TIPOS_ELEMENTO = [
@@ -20,30 +20,41 @@ const PRIORIDADES = [
   { value: 'URGENTE', label: 'Urgente', desc: 'Requiere atención inmediata' },
 ]
 
-export default function NuevoReporteModal({ espacios, usuarios, onClose }) {
+export default function NuevoReporteModal({ espacios, onClose }) {
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState(null)
+  const [usuarioLogueado, setUsuarioLogueado] = useState(null)
   const [form, setForm] = useState({
     espacioId: '',
-    reportadoPorId: '',
     titulo: '',
     descripcion: '',
     tipoElemento: 'OTRO',
     prioridad: 'MEDIA',
   })
 
+  // Cargar usuario logueado desde localStorage al abrir el modal
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('user')
+      if (raw) {
+        const u = JSON.parse(raw)
+        setUsuarioLogueado(u)
+      }
+    } catch {}
+  }, [])
+
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }))
 
   const handleSubmit = () => {
-    if (!form.reportadoPorId || !form.titulo || !form.descripcion) {
-      setError('Completa los campos requeridos: reportado por, título y descripción.')
+    if (!usuarioLogueado?.id || !form.titulo || !form.descripcion) {
+      setError('Completa los campos requeridos: título y descripción.')
       return
     }
     setError(null)
     startTransition(async () => {
       const result = await crearReporteMantenimiento({
         ...form,
-        reportadoPorId: parseInt(form.reportadoPorId),
+        reportadoPorId: String(usuarioLogueado.id),
       })
       if (result.success) {
         onClose('Reporte enviado correctamente.', 'success')
@@ -77,15 +88,15 @@ export default function NuevoReporteModal({ espacios, usuarios, onClose }) {
                 </select>
               </div>
               <div className="adm-form-group">
-                <label className="adm-label">Reportado por *</label>
-                <select className="adm-input" value={form.reportadoPorId} onChange={(e) => set('reportadoPorId', e.target.value)}>
-                  <option value="">— Seleccionar catedrático —</option>
-                  {usuarios.map((u) => (
-                      <option key={u.id} value={String(u.id)}>
-                        {u.nombre} {u.apellido || ''} — {u.codigo}
-                      </option>
-                  ))}
-                </select>
+                <label className="adm-label">Reportado por</label>
+                <div className="adm-input" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'default', opacity: 0.85 }}>
+                  <i className="fa fa-user-circle" style={{ fontSize: '16px' }} />
+                  <span>
+                    {usuarioLogueado
+                      ? `${usuarioLogueado.first_name || ''} ${usuarioLogueado.last_name || ''}`.trim() || usuarioLogueado.email
+                      : 'Cargando...'}
+                  </span>
+                </div>
               </div>
             </div>
 

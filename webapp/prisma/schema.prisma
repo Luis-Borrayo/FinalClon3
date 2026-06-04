@@ -1229,7 +1229,10 @@ enum EstadoReservaEspacio {
 enum TipoElemento {
   AIRE_ACONDICIONADO
   PROYECTOR
+  ILUMINACION
   MOBILIARIO
+  PUERTA_VENTANA
+  SANITARIO
   OTRO
 
   @@schema("grupo8_administracion")

@@ -325,7 +325,7 @@ function CalendarioMensual({ reservasPendientes, onAprobar, onRechazar, pending 
 
 // ── Dashboard principal ───────────────────────────────────────────────────────
 export default function AdministracionDashboard({ initialData, userRole = 'ADMIN' }) {
-  const isStudent = userRole === 'STUDENT'
+  const isStudent = userRole === 'STUDENT' || userRole === 'TEACHER'
   const router = useRouter()
   const { showToast } = useAdmToast()
   const [tab, setTab] = useState(isStudent ? 'mantenimiento' : 'espacios')
@@ -772,7 +772,6 @@ export default function AdministracionDashboard({ initialData, userRole = 'ADMIN
         {showReporteModal && (
             <NuevoReporteModal
                 espacios={espacios}
-                usuarios={usuarios}
                 onClose={(msg, type) => {
                   setShowReporteModal(false)
                   if (msg) { showToast(msg, type); router.refresh() }

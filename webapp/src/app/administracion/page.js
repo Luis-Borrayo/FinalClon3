@@ -11,7 +11,7 @@ export const metadata = {
 
 export default async function AdministracionPage() {
   const user = await getServerUser()
-  if (!user || !['ADMIN', 'STUDENT'].includes(user.role)) redirect('/login')
+  if (!user || !['ADMIN', 'TEACHER', 'STUDENT'].includes(user.role)) redirect('/login')
 
   const data = await getDashboardAdminData()
   return (
