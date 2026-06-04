@@ -11,12 +11,12 @@ export const metadata = {
 
 export default async function AdministracionPage() {
   const user = await getServerUser()
-  if (!user || user.role !== 'ADMIN') redirect('/login')
+  if (!user || !['ADMIN', 'STUDENT'].includes(user.role)) redirect('/login')
 
   const data = await getDashboardAdminData()
   return (
     <ToastProvider>
-      <AdministracionDashboard initialData={data} />
+      <AdministracionDashboard initialData={data} userRole={user.role} />
     </ToastProvider>
   )
 }
