@@ -1198,6 +1198,7 @@ model InscripcionActividad {
 // ─────────────────────────────────────────────────────────────────────────────
 
 enum TipoEspacio {
+  SALON
   AUDITORIO
   LABORATORIO_ADMIN
   SALA_REUNIONES

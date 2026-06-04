@@ -324,10 +324,11 @@ function CalendarioMensual({ reservasPendientes, onAprobar, onRechazar, pending 
 }
 
 // ── Dashboard principal ───────────────────────────────────────────────────────
-export default function AdministracionDashboard({ initialData }) {
+export default function AdministracionDashboard({ initialData, userRole = 'ADMIN' }) {
+  const isStudent = userRole === 'STUDENT'
   const router = useRouter()
   const { showToast } = useAdmToast()
-  const [tab, setTab] = useState('espacios')
+  const [tab, setTab] = useState(isStudent ? 'mantenimiento' : 'espacios')
   const [showEspacioModal, setShowEspacioModal] = useState(false)
   const [showReservaModal, setShowReservaModal] = useState(false)
   const [showReporteModal, setShowReporteModal] = useState(false)
@@ -391,12 +392,15 @@ export default function AdministracionDashboard({ initialData }) {
     })
   }
 
-  const tabs = [
-    { id: 'espacios', label: 'Espacios', icon: 'fa-building' },
-    { id: 'calendario', label: 'Calendario', icon: 'fa-calendar', badge: stats.reservasHoy },
-    { id: 'reservas', label: 'Reservas', icon: 'fa-clock-o', badge: stats.reservasPendientes },
-    { id: 'mantenimiento', label: 'Mantenimiento', icon: 'fa-wrench', badge: stats.reportesAbiertos },
+  const allTabs = [
+    { id: 'espacios',      label: 'Espacios',      icon: 'fa-building' },
+    { id: 'calendario',    label: 'Calendario',    icon: 'fa-calendar',  badge: stats.reservasHoy },
+    { id: 'reservas',      label: 'Reservas',      icon: 'fa-clock-o',   badge: stats.reservasPendientes },
+    { id: 'mantenimiento', label: 'Mantenimiento', icon: 'fa-wrench',    badge: stats.reportesAbiertos },
   ]
+  const tabs = isStudent
+    ? allTabs.filter((t) => t.id === 'mantenimiento')
+    : allTabs
 
   const statItems = [
     { id: 'espacios', label: 'Total Espacios', value: stats.totalEspacios },
@@ -427,15 +431,19 @@ export default function AdministracionDashboard({ initialData }) {
                     {stats.reservasPendientes} pendiente{stats.reservasPendientes !== 1 ? 's' : ''}
                   </button>
               )}
-              <button type="button" className="adm-btn-ghost" onClick={() => setShowReservaModal(true)}>
-                <i className="fa fa-calendar-plus-o" /> Reservar espacio
-              </button>
+              {!isStudent && (
+                <button type="button" className="adm-btn-ghost" onClick={() => setShowReservaModal(true)}>
+                  <i className="fa fa-calendar-plus-o" /> Reservar espacio
+                </button>
+              )}
               <button type="button" className="adm-btn-ghost" onClick={() => setShowReporteModal(true)}>
                 <i className="fa fa-wrench" /> Reportar problema
               </button>
-              <button type="button" className="adm-btn-ghost" onClick={() => setShowEspacioModal(true)}>
-                <i className="fa fa-plus" /> Nuevo espacio
-              </button>
+              {!isStudent && (
+                <button type="button" className="adm-btn-ghost" onClick={() => setShowEspacioModal(true)}>
+                  <i className="fa fa-plus" /> Nuevo espacio
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -481,9 +489,11 @@ export default function AdministracionDashboard({ initialData }) {
                   <div className="adm-empty dashboard-card adm-card">
                     <i className="fa fa-building text-3xl mb-3 opacity-40" aria-hidden="true" />
                     <p className="mb-2">No hay espacios registrados.</p>
-                    <button type="button" className="adm-btn-primary" onClick={() => setShowEspacioModal(true)}>
-                      <i className="fa fa-plus" /> Agregar primer espacio
-                    </button>
+                    {!isStudent && (
+                      <button type="button" className="adm-btn-primary" onClick={() => setShowEspacioModal(true)}>
+                        <i className="fa fa-plus" /> Agregar primer espacio
+                      </button>
+                    )}
                   </div>
               ) : (
                   <div className="adm-grid">
@@ -555,12 +565,14 @@ export default function AdministracionDashboard({ initialData }) {
                                     <i className="fa fa-wrench" /> Mantenimiento
                                   </button>
                               )}
-                              <button type="button"
-                                      className="adm-btn-ghost flex-1 justify-center text-xs text-red-400 hover:text-red-300"
-                                      disabled={pending}
-                                      onClick={() => handleEliminarEspacio(esp.id, esp.nombre)}>
-                                <i className="fa fa-trash" /> Borrar
-                              </button>
+                              {!isStudent && (
+                                <button type="button"
+                                        className="adm-btn-ghost flex-1 justify-center text-xs text-red-400 hover:text-red-300"
+                                        disabled={pending}
+                                        onClick={() => handleEliminarEspacio(esp.id, esp.nombre)}>
+                                  <i className="fa fa-trash" /> Borrar
+                                </button>
+                              )}
                             </div>
                           </article>
                       )
@@ -714,22 +726,24 @@ export default function AdministracionDashboard({ initialData }) {
                       <i className="fa fa-clock-o mr-1" />
                       {new Date(rep.createdAt).toLocaleDateString('es-GT')}
                     </span>
-                            <div className="flex gap-1">
-                              {rep.estado === 'ABIERTO' && (
-                                  <button type="button" className="adm-btn-ghost adm-btn-xs"
-                                          disabled={pending}
-                                          onClick={() => handleResolverReporte(rep.id, 'EN_PROCESO')}>
-                                    <i className="fa fa-play" /> En proceso
-                                  </button>
-                              )}
-                              {rep.estado !== 'RESUELTO' && rep.estado !== 'CERRADO' && (
-                                  <button type="button" className="adm-btn-primary adm-btn-xs"
-                                          disabled={pending}
-                                          onClick={() => handleResolverReporte(rep.id, 'RESUELTO')}>
-                                    <i className="fa fa-check" /> Resuelto
-                                  </button>
-                              )}
-                            </div>
+                            {!isStudent && (
+                              <div className="flex gap-1">
+                                {rep.estado === 'ABIERTO' && (
+                                    <button type="button" className="adm-btn-ghost adm-btn-xs"
+                                            disabled={pending}
+                                            onClick={() => handleResolverReporte(rep.id, 'EN_PROCESO')}>
+                                      <i className="fa fa-play" /> En proceso
+                                    </button>
+                                )}
+                                {rep.estado !== 'RESUELTO' && rep.estado !== 'CERRADO' && (
+                                    <button type="button" className="adm-btn-primary adm-btn-xs"
+                                            disabled={pending}
+                                            onClick={() => handleResolverReporte(rep.id, 'RESUELTO')}>
+                                      <i className="fa fa-check" /> Resuelto
+                                    </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                     ))}

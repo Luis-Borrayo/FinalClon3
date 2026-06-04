@@ -2,6 +2,7 @@
 // Labels, iconos y colores para el módulo de Administración de Espacios
 
 export const TIPO_ESPACIO_LABEL = {
+  SALON:            'Salón',
   AUDITORIO:        'Auditorio',
   LABORATORIO_ADMIN: 'Laboratorio',
   SALA_REUNIONES:   'Sala de Reuniones',
@@ -10,6 +11,7 @@ export const TIPO_ESPACIO_LABEL = {
 }
 
 export const TIPO_ESPACIO_ICON_FA = {
+  SALON:            'fa-graduation-cap',
   AUDITORIO:        'fa-microphone',
   LABORATORIO_ADMIN: 'fa-flask',
   SALA_REUNIONES:   'fa-users',
