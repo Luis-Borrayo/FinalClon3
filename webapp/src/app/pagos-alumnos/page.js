@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import '../laboratorios/laboratorios.css'
 import './pagos_alumnos.css'
 
 /* ── Utilidades de fecha ────────────────────────────────────────────────────── */
@@ -19,6 +18,15 @@ const ultimoDiaMes = () => {
 const mesActual = () => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/* ── Extractor de carnet desde email USPG ───────────────────────────────────
+   Patrón: est{carnet}@uspg.edu.gt  →  extrae "2600002" de "est2600002@uspg.edu.gt"
+   Si el email no sigue el patrón devuelve null.
+   ─────────────────────────────────────────────────────────────────────────── */
+function carnetDesdeEmail(email = '') {
+  const match = email.match(/^est(\d+)@uspg\.edu\.gt$/i)
+  return match ? match[1] : null
 }
 
 /* ── Constantes ─────────────────────────────────────────────────────────────── */
@@ -92,15 +100,11 @@ function ModalSection({ children }) {
   return <div className="pa-modal-section">{children}</div>
 }
 
-function ModalBtns({ onClose, onGuardar, labelGuardar = 'Guardar' }) {
+function ModalBtns({ onClose, onGuardar }) {
   return (
       <div className="pa-modal-btns">
-        <button className="lab-btn-primary" onClick={onGuardar}>
-          {labelGuardar}
-        </button>
-        <button className="lab-btn-primary lab-btn-danger" onClick={onClose}>
-          Cancelar
-        </button>
+        <button className="lab-btn-primary" onClick={onGuardar}>Guardar</button>
+        <button className="lab-btn-primary lab-btn-danger" onClick={onClose}>Cancelar</button>
       </div>
   )
 }
@@ -194,9 +198,7 @@ function ModalRecibo({ pago, onClose }) {
                   Ver PDF
                 </button>
             )}
-            <button className="lab-btn-primary lab-btn-danger" onClick={onClose}>
-              Cerrar
-            </button>
+            <button className="lab-btn-primary lab-btn-danger" onClick={onClose}>Cerrar</button>
           </div>
 
         </div>
@@ -205,17 +207,24 @@ function ModalRecibo({ pago, onClose }) {
 }
 
 /* ── Vista: Estado de Cuenta ─────────────────────────────────────────────────── */
-function VistaEstadoCuenta({ onClose }) {
-  const [carnet,   setCarnet]   = useState('')
+function VistaEstadoCuenta({ onClose, carnetFijo = null }) {
+  // Si viene carnetFijo (alumno logueado), lo usamos directo y no mostramos buscador
+  const [carnet,   setCarnet]   = useState(carnetFijo || '')
   const [cuenta,   setCuenta]   = useState(null)
   const [buscando, setBuscando] = useState(false)
   const [err,      setErr]      = useState(null)
 
-  async function buscar() {
-    if (!carnet.trim()) return
+  // Si es portal alumno, cargar automáticamente al abrir
+  useEffect(() => {
+    if (carnetFijo) buscar(carnetFijo)
+  }, [carnetFijo])
+
+  async function buscar(c) {
+    const target = c || carnet
+    if (!target.trim()) return
     setBuscando(true); setErr(null); setCuenta(null)
     try {
-      const res = await fetch(`/pagos-alumnos/estado-cuenta/${carnet.trim()}`)
+      const res = await fetch(`/pagos-alumnos/estado-cuenta/${target.trim()}`)
       if (res.ok) setCuenta(await res.json())
       else setErr('Alumno no encontrado o sin movimientos.')
     } catch { setErr('Error de conexión.') }
@@ -227,23 +236,23 @@ function VistaEstadoCuenta({ onClose }) {
         <div className="lab-modal pa-cuenta-modal" onClick={e => e.stopPropagation()}>
           <h2 className="pa-modal-title">📋 Estado de Cuenta</h2>
 
-          <div className="pa-cuenta-search-row">
-            <Inp
-                placeholder="Ingresa el carnet del alumno..."
-                value={carnet}
-                onChange={e => setCarnet(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && buscar()}
-            />
-            <button className="lab-btn-primary" onClick={buscar} disabled={buscando}>
-              {buscando ? '...' : '🔍 Buscar'}
-            </button>
-          </div>
-
-          {err && (
-              <p style={{ color: '#fca5a5', fontSize: '0.82rem', margin: '0.5rem 0' }}>
-                {err}
-              </p>
+          {/* Solo mostrar buscador al admin */}
+          {!carnetFijo && (
+              <div className="pa-cuenta-search-row">
+                <Inp
+                    placeholder="Ingresa el carnet del alumno..."
+                    value={carnet}
+                    onChange={e => setCarnet(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && buscar()}
+                />
+                <button className="lab-btn-primary" onClick={() => buscar()} disabled={buscando}>
+                  {buscando ? '...' : '🔍 Buscar'}
+                </button>
+              </div>
           )}
+
+          {buscando && <p style={{ color: 'var(--pa-muted)', textAlign: 'center', padding: '1rem' }}>Cargando...</p>}
+          {err && <p style={{ color: '#fca5a5', fontSize: '0.82rem', margin: '0.5rem 0' }}>{err}</p>}
 
           {cuenta && (
               <>
@@ -284,9 +293,7 @@ function VistaEstadoCuenta({ onClose }) {
                     </thead>
                     <tbody>
                     {(cuenta.movimientos || []).length === 0 ? (
-                        <tr>
-                          <td colSpan={6}>Sin movimientos registrados</td>
-                        </tr>
+                        <tr><td colSpan={6}>Sin movimientos registrados</td></tr>
                     ) : (cuenta.movimientos || []).map((m, i) => (
                         <tr key={i}>
                           <td>{m.mes}</td>
@@ -348,14 +355,8 @@ function VistaAgenda({ onClose }) {
   }
 
   function esHoy(dia) {
-    return (
-        dia === hoyDate.getDate() &&
-        mes === hoyDate.getMonth() &&
-        anio === hoyDate.getFullYear()
-    )
+    return dia === hoyDate.getDate() && mes === hoyDate.getMonth() && anio === hoyDate.getFullYear()
   }
-
-  const colores = { mensualidad: '#f59e0b', matricula: '#3b82f6', parqueo: '#10b981' }
 
   function navMes(dir) {
     if (dir === -1) {
@@ -364,6 +365,8 @@ function VistaAgenda({ onClose }) {
       if (mes === 11) { setMes(0); setAnio(a => a + 1) } else setMes(m => m + 1)
     }
   }
+
+  const colores = { mensualidad: '#f59e0b', matricula: '#3b82f6', parqueo: '#10b981' }
 
   return (
       <div className="lab-modal-overlay" onClick={onClose}>
@@ -393,8 +396,8 @@ function VistaAgenda({ onClose }) {
                       key={i}
                       className={[
                         'pa-agenda-cell',
-                        esHoy(dia)  ? 'pa-agenda-hoy'   : '',
-                        !dia        ? 'pa-agenda-vacio'  : ''
+                        esHoy(dia) ? 'pa-agenda-hoy'  : '',
+                        !dia       ? 'pa-agenda-vacio' : ''
                       ].join(' ')}
                   >
                     {dia && <span className="pa-agenda-dia">{dia}</span>}
@@ -423,9 +426,7 @@ function VistaAgenda({ onClose }) {
                 </div>
             ))}
             {eventos.filter(e => e.fecha >= hoy()).length === 0 && (
-                <p style={{ color: 'var(--pa-muted)', fontSize: '0.8rem' }}>
-                  Sin vencimientos próximos
-                </p>
+                <p style={{ color: 'var(--pa-muted)', fontSize: '0.8rem' }}>Sin vencimientos próximos</p>
             )}
           </div>
 
@@ -492,64 +493,36 @@ function VistaReportes({ onClose }) {
 
                 <div className="pa-section-subtitle">Ingresos por mes</div>
                 <table className="lab-table">
-                  <thead>
-                  <tr>
-                    <th>Mes</th>
-                    <th>Total</th>
-                  </tr>
-                  </thead>
+                  <thead><tr><th>Mes</th><th>Total</th></tr></thead>
                   <tbody>
                   {reporte.ingresos_por_mes.length === 0 ? (
                       <tr><td colSpan={2} className="pa-empty-td">Sin ingresos registrados</td></tr>
                   ) : reporte.ingresos_por_mes.map((r, i) => (
-                      <tr key={i}>
-                        <td>{r.mes}</td>
-                        <td><strong>{r.total_formateado}</strong></td>
-                      </tr>
+                      <tr key={i}><td>{r.mes}</td><td><strong>{r.total_formateado}</strong></td></tr>
                   ))}
                   </tbody>
                 </table>
 
                 <div className="pa-section-subtitle">Ingresos por forma de pago</div>
                 <table className="lab-table">
-                  <thead>
-                  <tr>
-                    <th>Forma</th>
-                    <th>Cantidad</th>
-                    <th>Total</th>
-                  </tr>
-                  </thead>
+                  <thead><tr><th>Forma</th><th>Cantidad</th><th>Total</th></tr></thead>
                   <tbody>
                   {reporte.ingresos_por_forma_pago.length === 0 ? (
                       <tr><td colSpan={3} className="pa-empty-td">Sin datos</td></tr>
                   ) : reporte.ingresos_por_forma_pago.map((r, i) => (
-                      <tr key={i}>
-                        <td>{r.forma_pago}</td>
-                        <td>{r.cantidad}</td>
-                        <td><strong>{r.total_formateado}</strong></td>
-                      </tr>
+                      <tr key={i}><td>{r.forma_pago}</td><td>{r.cantidad}</td><td><strong>{r.total_formateado}</strong></td></tr>
                   ))}
                   </tbody>
                 </table>
 
                 <div className="pa-section-subtitle">Morosidad</div>
                 <table className="lab-table">
-                  <thead>
-                  <tr>
-                    <th>Estado</th>
-                    <th>Cantidad</th>
-                    <th>Total pendiente</th>
-                  </tr>
-                  </thead>
+                  <thead><tr><th>Estado</th><th>Cantidad</th><th>Total pendiente</th></tr></thead>
                   <tbody>
                   {reporte.morosidad.length === 0 ? (
                       <tr><td colSpan={3} className="pa-empty-td">Sin morosidad registrada</td></tr>
                   ) : reporte.morosidad.map((r, i) => (
-                      <tr key={i}>
-                        <td>{r.estado_pago}</td>
-                        <td>{r.cantidad}</td>
-                        <td><strong>{r.total_pendiente_formateado}</strong></td>
-                      </tr>
+                      <tr key={i}><td>{r.estado_pago}</td><td>{r.cantidad}</td><td><strong>{r.total_pendiente_formateado}</strong></td></tr>
                   ))}
                   </tbody>
                 </table>
@@ -592,21 +565,11 @@ function ModalMatricula({ onClose }) {
         <ModalSection>Información del pago</ModalSection>
         <ModalRow>
           <Inp className="pa-inp-orange" type="date" value={form.fecha} onChange={e => set('fecha', e.target.value)} />
-          <Inp
-              className="pa-inp-id"
-              readOnly
-              value={nextId !== null ? (nextId === '—' ? 'cargando...' : `#${nextId}`) : 'cargando...'}
-              placeholder="No. de formulario"
-          />
+          <Inp className="pa-inp-id" readOnly value={nextId !== null ? (nextId === '—' ? 'cargando...' : `#${nextId}`) : 'cargando...'} placeholder="No. de formulario" />
         </ModalRow>
 
         <ModalSection>Alumno</ModalSection>
-        <Inp
-            className="pa-inp-full"
-            placeholder="Carnet del alumno"
-            value={form.carnet}
-            onChange={e => set('carnet', e.target.value)}
-        />
+        <Inp className="pa-inp-full" placeholder="Carnet del alumno" value={form.carnet} onChange={e => set('carnet', e.target.value)} />
         <ModalRow>
           <Inp className="pa-inp-green" placeholder="Nombres"   value={alumno.nombres}   readOnly />
           <Inp className="pa-inp-green" placeholder="Apellidos" value={alumno.apellidos} readOnly />
@@ -625,8 +588,8 @@ function ModalMatricula({ onClose }) {
           </Sel>
         </ModalRow>
         <ModalRow>
-          <Inp type="number" placeholder="Año"          value={form.anio}   onChange={e => set('anio',   e.target.value)} />
-          <Inp type="number" placeholder="Precio (Q)"   value={form.precio} onChange={e => set('precio', e.target.value)} />
+          <Inp type="number" placeholder="Año"        value={form.anio}   onChange={e => set('anio',   e.target.value)} />
+          <Inp type="number" placeholder="Precio (Q)" value={form.precio} onChange={e => set('precio', e.target.value)} />
         </ModalRow>
 
         <ModalBtns onClose={onClose} onGuardar={guardar} />
@@ -662,21 +625,11 @@ function ModalMensualidad({ onClose }) {
         <ModalSection>Información del pago</ModalSection>
         <ModalRow>
           <Inp className="pa-inp-orange" type="date" value={hoy()} readOnly />
-          <Inp
-              className="pa-inp-id"
-              readOnly
-              value={nextId !== null ? (nextId === '—' ? 'cargando...' : `#${nextId}`) : 'cargando...'}
-              placeholder="No. de formulario"
-          />
+          <Inp className="pa-inp-id" readOnly value={nextId !== null ? (nextId === '—' ? 'cargando...' : `#${nextId}`) : 'cargando...'} placeholder="No. de formulario" />
         </ModalRow>
 
         <ModalSection>Alumno</ModalSection>
-        <Inp
-            className="pa-inp-full"
-            placeholder="Carnet del alumno"
-            value={form.carnet}
-            onChange={e => set('carnet', e.target.value)}
-        />
+        <Inp className="pa-inp-full" placeholder="Carnet del alumno" value={form.carnet} onChange={e => set('carnet', e.target.value)} />
         <ModalRow>
           <Inp className="pa-inp-green" placeholder="Nombres"   value={alumno.nombres}   readOnly />
           <Inp className="pa-inp-green" placeholder="Apellidos" value={alumno.apellidos} readOnly />
@@ -697,30 +650,15 @@ function ModalMensualidad({ onClose }) {
           <Inp className="pa-inp-orange" type="date" value={form.fecha_limite} onChange={e => set('fecha_limite', e.target.value)} />
           <Inp type="number" placeholder="Precio (Q)" value={form.precio} onChange={e => set('precio', e.target.value)} />
         </ModalRow>
-        <Sel
-            className="pa-inp-purple pa-inp-full"
-            value={form.estado_pago}
-            onChange={e => set('estado_pago', e.target.value)}
-        >
+        <Sel className="pa-inp-purple pa-inp-full" value={form.estado_pago} onChange={e => set('estado_pago', e.target.value)}>
           <option value="">Estado de cuota</option>
           {ESTADOS_CUOTA.map(s => <option key={s}>{s}</option>)}
         </Sel>
 
         <ModalSection>Mora</ModalSection>
         <ModalRow>
-          <div>
-            <Inp type="number" placeholder="Días en mora" value={form.dias_mora} readOnly />
-          </div>
-          <div>
-            <Inp
-                className="pa-inp-green"
-                type="number"
-                placeholder="Mora (Q)"
-                value={form.monto_mora}
-                readOnly
-                title="La mora se calcula automáticamente en backend"
-            />
-          </div>
+          <Inp type="number" placeholder="Días en mora" value={form.dias_mora} readOnly />
+          <Inp className="pa-inp-green" type="number" placeholder="Mora (Q)" value={form.monto_mora} readOnly title="Se calcula automáticamente en backend" />
         </ModalRow>
 
         <ModalBtns onClose={onClose} onGuardar={guardar} />
@@ -731,9 +669,7 @@ function ModalMensualidad({ onClose }) {
 /* ── Modal Pagos Varios ───────────────────────────────────────────────────────── */
 function ModalPagosVarios({ onClose }) {
   const [nextId] = useNextId('/pagos-alumnos/registros/varios/next-id')
-  const [form, setForm] = useState({
-    carnet: '', motivo_pago: '', forma_pago: '', precio: ''
-  })
+  const [form, setForm] = useState({ carnet: '', motivo_pago: '', forma_pago: '', precio: '' })
   const set    = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const alumno = useAlumno(form.carnet)
 
@@ -755,21 +691,11 @@ function ModalPagosVarios({ onClose }) {
         <ModalSection>Información del pago</ModalSection>
         <ModalRow>
           <Inp className="pa-inp-orange" type="date" value={hoy()} readOnly />
-          <Inp
-              className="pa-inp-id"
-              readOnly
-              value={nextId !== null ? (nextId === '—' ? 'cargando...' : `#${nextId}`) : 'cargando...'}
-              placeholder="No. de formulario"
-          />
+          <Inp className="pa-inp-id" readOnly value={nextId !== null ? (nextId === '—' ? 'cargando...' : `#${nextId}`) : 'cargando...'} placeholder="No. de formulario" />
         </ModalRow>
 
         <ModalSection>Alumno</ModalSection>
-        <Inp
-            className="pa-inp-full"
-            placeholder="Carnet del alumno"
-            value={form.carnet}
-            onChange={e => set('carnet', e.target.value)}
-        />
+        <Inp className="pa-inp-full" placeholder="Carnet del alumno" value={form.carnet} onChange={e => set('carnet', e.target.value)} />
         <ModalRow>
           <Inp className="pa-inp-green" placeholder="Nombres"   value={alumno.nombres}   readOnly />
           <Inp className="pa-inp-green" placeholder="Apellidos" value={alumno.apellidos} readOnly />
@@ -786,13 +712,7 @@ function ModalPagosVarios({ onClose }) {
             {FORMAS_PAGO.map(f => <option key={f}>{f}</option>)}
           </Sel>
         </ModalRow>
-        <Inp
-            className="pa-inp-full"
-            type="number"
-            placeholder="Precio (Q)"
-            value={form.precio}
-            onChange={e => set('precio', e.target.value)}
-        />
+        <Inp className="pa-inp-full" type="number" placeholder="Precio (Q)" value={form.precio} onChange={e => set('precio', e.target.value)} />
 
         <ModalBtns onClose={onClose} onGuardar={guardar} />
       </ModalBase>
@@ -814,12 +734,7 @@ function ModalParqueo({ onClose }) {
         <ModalSection>Información del pago</ModalSection>
         <ModalRow>
           <Inp className="pa-inp-orange" type="date" value={hoy()} readOnly />
-          <Inp
-              className="pa-inp-id"
-              readOnly
-              value={nextId !== null ? (nextId === '—' ? 'cargando...' : `#${nextId}`) : 'cargando...'}
-              placeholder="No. de formulario"
-          />
+          <Inp className="pa-inp-id" readOnly value={nextId !== null ? (nextId === '—' ? 'cargando...' : `#${nextId}`) : 'cargando...'} placeholder="No. de formulario" />
         </ModalRow>
 
         <ModalSection>Identificación</ModalSection>
@@ -855,18 +770,177 @@ function ModalParqueo({ onClose }) {
           <Inp type="number" placeholder="Precio (Q)" value={form.precio} onChange={e => set('precio', e.target.value)} />
         </ModalRow>
 
-        <ModalBtns
-            onClose={onClose}
-            onGuardar={() => { alert('Integración con Grupo 5 pendiente'); onClose() }}
-        />
+        <ModalBtns onClose={onClose} onGuardar={() => { alert('Integración con Grupo 5 pendiente'); onClose() }} />
       </ModalBase>
   )
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   COMPONENTE PRINCIPAL
+   PORTAL DEL ALUMNO — vista completa cuando role === 'STUDENT'
    ══════════════════════════════════════════════════════════════════════════════ */
-export default function PagosAlumnos() {
+function PortalAlumno({ user }) {
+  // El objeto user de USPG no incluye carnet directamente.
+  // Lo extraemos del email con el patrón est{carnet}@uspg.edu.gt
+  const carnet = user?.carnet || carnetDesdeEmail(user?.email)
+  const [vista,      setVista]      = useState(null)
+  const [misPagos,   setMisPagos]   = useState([])
+  const [cargando,   setCargando]   = useState(true)
+  const [filtroMes,  setFiltroMes]  = useState(mesActual())
+  const [reciboActivo, setReciboActivo] = useState(null)
+
+  useEffect(() => {
+    if (!carnet) return
+    setCargando(true)
+    fetch(`/pagos-alumnos/con-pago?mes=${filtroMes}&carnet=${carnet}`)
+        .then(r => r.ok ? r.json() : [])
+        .then(d => setMisPagos(d))
+        .catch(() => setMisPagos([]))
+        .finally(() => setCargando(false))
+  }, [carnet, filtroMes])
+
+  const nombreCompleto = user?.nombre
+      ? `${user.nombre} ${user.apellido || ''}`.trim()
+      : 'Alumno'
+
+  return (
+      <div className="uspg-page pa-wrap">
+
+        {/* ── Header portal alumno ───────────────────────────────────────── */}
+        <div className="pa-header">
+          <div>
+            <h1>Mi <span>Portal</span> Estudiantil</h1>
+            <p className="pa-portal-sub">Carnet: <strong>{carnet}</strong> — {nombreCompleto}</p>
+          </div>
+          <nav className="pa-nav">
+            <a onClick={() => setVista('agenda')} style={{ cursor: 'pointer' }}>
+              <i className="fa fa-calendar" /><span>Agenda</span>
+            </a>
+          </nav>
+        </div>
+
+        {/* ── Accesos rápidos ────────────────────────────────────────────── */}
+        <div className="pa-portal-accesos">
+          <button
+              className="pa-portal-card"
+              onClick={() => setVista('cuenta')}
+          >
+            <div className="pa-portal-card-icon"></div>
+            <div className="pa-portal-card-label">Estado de Cuenta</div>
+            <div className="pa-portal-card-desc">Consulta tus pagos y movimientos</div>
+          </button>
+
+          <button
+              className="pa-portal-card"
+              onClick={() => window.open(`/pagos-alumnos/estado-cuenta-pdf/${carnet}`, '_blank')}
+          >
+            <div className="pa-portal-card-icon"></div>
+            <div className="pa-portal-card-label">Estado de Cuenta PDF</div>
+            <div className="pa-portal-card-desc">Descarga tu estado en PDF</div>
+          </button>
+
+          <button
+              className="pa-portal-card"
+              onClick={() => window.open(`/pagos-alumnos/constancia-solvencia/${carnet}`, '_blank')}
+          >
+            <div className="pa-portal-card-icon"></div>
+            <div className="pa-portal-card-label">Constancia de Solvencia</div>
+            <div className="pa-portal-card-desc">Genera tu constancia actualizada</div>
+          </button>
+
+          <button
+              className="pa-portal-card"
+              onClick={() => window.open(`/pagos-alumnos/carga-academica/${carnet}`, '_blank')}
+          >
+            <div className="pa-portal-card-icon"></div>
+            <div className="pa-portal-card-label">Mi Carga Académica</div>
+            <div className="pa-portal-card-desc">Consulta tus cursos inscritos</div>
+          </button>
+        </div>
+
+        {/* ── Mis pagos del mes ──────────────────────────────────────────── */}
+        <div className="lab-table-wrap" style={{ marginTop: '1.5rem' }}>
+          <div className="pa-table-header">
+            <h3>Mis pagos del mes</h3>
+            <div className="pa-table-controls">
+              <input
+                  type="month"
+                  className="pa-search"
+                  value={filtroMes}
+                  onChange={e => setFiltroMes(e.target.value)}
+                  style={{ width: '150px' }}
+              />
+            </div>
+          </div>
+
+          {cargando ? (
+              <p style={{ textAlign: 'center', color: 'var(--pa-muted)', padding: '2.5rem' }}>Cargando...</p>
+          ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="lab-table">
+                  <thead>
+                  <tr>
+                    <th>No.</th>
+                    <th>Concepto</th>
+                    <th>Descripción</th>
+                    <th>Forma de pago</th>
+                    <th>Fecha</th>
+                    <th>Monto</th>
+                    <th>Recibo</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  {misPagos.length === 0 ? (
+                      <tr><td colSpan={7}>No tienes pagos registrados este mes</td></tr>
+                  ) : misPagos.map((p, i) => (
+                      <tr key={`${p.concepto}-${p.id_ref}-${i}`}>
+                        <td>{p.no}</td>
+                        <td>{p.concepto}</td>
+                        <td>{p.descripcion}</td>
+                        <td>{p.forma}</td>
+                        <td>{p.fecha}</td>
+                        <td><strong>{p.monto}</strong></td>
+                        <td>
+                          <button
+                              className="btn-recibo"
+                              onClick={async () => {
+                                if (!p.id_recibo) { alert('Este pago no tiene recibo asociado.'); return }
+                                try {
+                                  const res    = await fetch(`/pagos-alumnos/recibos/${p.id_recibo}`)
+                                  const recibo = await res.json()
+                                  if (!res.ok) throw new Error(recibo.error || 'No se pudo obtener el recibo')
+                                  setReciboActivo({
+                                    recibo: recibo.recibo, carnet: recibo.carnet,
+                                    nombre: recibo.nombre, apellido: recibo.apellido,
+                                    tipo: recibo.tipo, fecha: recibo.fecha,
+                                    monto: recibo.monto_formateado, estado: recibo.estado,
+                                    referencia: recibo.id_referencia
+                                  })
+                                } catch (err) { alert(err.message) }
+                              }}
+                          >
+                            Ver
+                          </button>
+                        </td>
+                      </tr>
+                  ))}
+                  </tbody>
+                </table>
+              </div>
+          )}
+        </div>
+
+        {/* ── Vistas y modales ───────────────────────────────────────────── */}
+        {vista === 'cuenta' && <VistaEstadoCuenta carnetFijo={carnet} onClose={() => setVista(null)} />}
+        {vista === 'agenda' && <VistaAgenda onClose={() => setVista(null)} />}
+        {reciboActivo && <ModalRecibo pago={reciboActivo} onClose={() => setReciboActivo(null)} />}
+      </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   VISTA ADMIN — dashboard completo
+   ══════════════════════════════════════════════════════════════════════════════ */
+function VistaAdmin() {
   const [modal,        setModal]        = useState(null)
   const [vista,        setVista]        = useState(null)
   const [busqueda,     setBusqueda]     = useState('')
@@ -954,20 +1028,16 @@ export default function PagosAlumnos() {
             <div className="reg-title">Registrar Pagos</div>
             <div className="pa-reg-btns">
               <button className="pa-reg-btn" onClick={() => setModal('matricula')}>
-                <i className="fa fa-id-card" />
-                <span>Matrícula</span>
+                <i className="fa fa-id-card" /><span>Matrícula</span>
               </button>
               <button className="pa-reg-btn" onClick={() => setModal('mensualidad')}>
-                <i className="fa fa-file-text" />
-                <span>Mensualidad</span>
+                <i className="fa fa-file-text" /><span>Mensualidad</span>
               </button>
               <button className="pa-reg-btn" onClick={() => setModal('varios')}>
-                <i className="fa fa-list" />
-                <span>Pagos Varios</span>
+                <i className="fa fa-list" /><span>Pagos Varios</span>
               </button>
               <button className="pa-reg-btn" onClick={() => setModal('parqueo')}>
-                <i className="fa fa-car" />
-                <span>Parqueo</span>
+                <i className="fa fa-car" /><span>Parqueo</span>
               </button>
             </div>
           </div>
@@ -987,50 +1057,32 @@ export default function PagosAlumnos() {
             <h3>Alumnos con pagos del mes</h3>
             <div className="pa-table-controls">
               <input
-                  type="month"
-                  className="pa-search"
-                  value={filtroMes}
+                  type="month" className="pa-search" value={filtroMes}
                   onChange={e => setFiltroMes(e.target.value)}
-                  title="Filtrar por mes"
-                  style={{ width: '150px' }}
+                  title="Filtrar por mes" style={{ width: '150px' }}
               />
               <input
-                  className="pa-search"
-                  placeholder="Buscar por carnet o nombre..."
-                  value={busqueda}
-                  onChange={e => setBusqueda(e.target.value)}
+                  className="pa-search" placeholder="Buscar por carnet o nombre..."
+                  value={busqueda} onChange={e => setBusqueda(e.target.value)}
               />
             </div>
           </div>
 
           {cargando ? (
-              <p style={{ textAlign: 'center', color: 'var(--pa-muted)', padding: '2.5rem' }}>
-                Cargando...
-              </p>
+              <p style={{ textAlign: 'center', color: 'var(--pa-muted)', padding: '2.5rem' }}>Cargando...</p>
           ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table className="lab-table">
                   <thead>
                   <tr>
-                    <th>No.</th>
-                    <th>Carnet</th>
-                    <th>Nombre</th>
-                    <th>Apellidos</th>
-                    <th>Forma de pago</th>
-                    <th>Concepto</th>
-                    <th>Descripción</th>
-                    <th>Fecha</th>
-                    <th>Monto</th>
-                    <th>Recibo</th>
+                    <th>No.</th><th>Carnet</th><th>Nombre</th><th>Apellidos</th>
+                    <th>Forma de pago</th><th>Concepto</th><th>Descripción</th>
+                    <th>Fecha</th><th>Monto</th><th>Recibo</th>
                   </tr>
                   </thead>
                   <tbody>
                   {filtrados.length === 0 ? (
-                      <tr>
-                        <td colSpan={10}>
-                          Sin pagos registrados este mes
-                        </td>
-                      </tr>
+                      <tr><td colSpan={10}>Sin pagos registrados este mes</td></tr>
                   ) : filtrados.map((p, i) => (
                       <tr key={`${p.concepto}-${p.id_ref}-${i}`}>
                         <td>{p.no}</td>
@@ -1046,23 +1098,16 @@ export default function PagosAlumnos() {
                           <button
                               className="btn-recibo"
                               onClick={async () => {
-                                if (!p.id_recibo) {
-                                  alert('Este pago no tiene recibo asociado.')
-                                  return
-                                }
+                                if (!p.id_recibo) { alert('Este pago no tiene recibo asociado.'); return }
                                 try {
                                   const res    = await fetch(`/pagos-alumnos/recibos/${p.id_recibo}`)
                                   const recibo = await res.json()
                                   if (!res.ok) throw new Error(recibo.error || 'No se pudo obtener el recibo')
                                   setReciboActivo({
-                                    recibo:     recibo.recibo,
-                                    carnet:     recibo.carnet,
-                                    nombre:     recibo.nombre,
-                                    apellido:   recibo.apellido,
-                                    tipo:       recibo.tipo,
-                                    fecha:      recibo.fecha,
-                                    monto:      recibo.monto_formateado,
-                                    estado:     recibo.estado,
+                                    recibo: recibo.recibo, carnet: recibo.carnet,
+                                    nombre: recibo.nombre, apellido: recibo.apellido,
+                                    tipo: recibo.tipo, fecha: recibo.fecha,
+                                    monto: recibo.monto_formateado, estado: recibo.estado,
                                     referencia: recibo.id_referencia
                                   })
                                 } catch (err) { alert(err.message) }
@@ -1085,40 +1130,27 @@ export default function PagosAlumnos() {
             <h3>Alumnos sin pagos del mes</h3>
             <div className="pa-table-controls">
               <input
-                  className="pa-search"
-                  placeholder="Buscar por carnet o nombre..."
-                  value={busquedaSin}
-                  onChange={e => setBusquedaSin(e.target.value)}
+                  className="pa-search" placeholder="Buscar por carnet o nombre..."
+                  value={busquedaSin} onChange={e => setBusquedaSin(e.target.value)}
               />
             </div>
           </div>
 
           {cargando ? (
-              <p style={{ textAlign: 'center', color: 'var(--pa-muted)', padding: '2.5rem' }}>
-                Cargando...
-              </p>
+              <p style={{ textAlign: 'center', color: 'var(--pa-muted)', padding: '2.5rem' }}>Cargando...</p>
           ) : (
               <div style={{ overflowX: 'auto' }}>
                 <table className="lab-table">
                   <thead>
                   <tr>
-                    <th>No.</th>
-                    <th>Carnet</th>
-                    <th>Nombre</th>
-                    <th>Apellidos</th>
-                    <th>Carrera</th>
-                    <th>Estado</th>
-                    <th>Sin pagar</th>
+                    <th>No.</th><th>Carnet</th><th>Nombre</th><th>Apellidos</th>
+                    <th>Carrera</th><th>Estado</th><th>Sin pagar</th>
                     <th>Atraso Mensualidad / Matrícula</th>
                   </tr>
                   </thead>
                   <tbody>
                   {filtradosSin.length === 0 ? (
-                      <tr>
-                        <td colSpan={8}>
-                          ✅ Todos los alumnos tienen pagos este mes
-                        </td>
-                      </tr>
+                      <tr><td colSpan={8}>✅ Todos los alumnos tienen pagos este mes</td></tr>
                   ) : filtradosSin.map((p, i) => (
                       <tr key={`sinpago-${p.carnet}-${i}`}>
                         <td>{p.no}</td>
@@ -1127,9 +1159,7 @@ export default function PagosAlumnos() {
                         <td>{p.apellidos}</td>
                         <td>{p.carrera}</td>
                         <td>
-                          <span className={`badge-${(p.estado || '').toLowerCase()}`}>
-                            {p.estado}
-                          </span>
+                          <span className={`badge-${(p.estado || '').toLowerCase()}`}>{p.estado}</span>
                         </td>
                         <td>{p.forma}</td>
                         <td><strong>{p.sin_pagar}</strong></td>
@@ -1153,9 +1183,50 @@ export default function PagosAlumnos() {
         {vista === 'reportes' && <VistaReportes     onClose={() => setVista(null)} />}
 
         {/* ── Modal recibo ──────────────────────────────────────────────────── */}
-        {reciboActivo && (
-            <ModalRecibo pago={reciboActivo} onClose={() => setReciboActivo(null)} />
-        )}
+        {reciboActivo && <ModalRecibo pago={reciboActivo} onClose={() => setReciboActivo(null)} />}
+      </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   COMPONENTE RAÍZ — lee el rol y decide qué vista renderizar
+   ══════════════════════════════════════════════════════════════════════════════ */
+export default function PagosAlumnos() {
+  const [user,    setUser]    = useState(null)
+  const [cargado, setCargado] = useState(false)
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user')
+      if (stored) setUser(JSON.parse(stored))
+    } catch { /* si localStorage falla, user queda null */ }
+    finally { setCargado(true) }
+  }, [])
+
+  // Esperar hasta leer localStorage para evitar flash de contenido incorrecto
+  if (!cargado) {
+    return (
+        <div className="pa-loading-screen">
+          <div className="pa-loading-spinner" />
+        </div>
+    )
+  }
+
+  const esAdmin  = user?.role === 'ADMIN'
+  const esAlumno = user?.role === 'STUDENT'
+
+  if (esAlumno) return <PortalAlumno user={user} />
+  if (esAdmin)  return <VistaAdmin />
+
+  // Rol desconocido o sin sesión — acceso denegado
+  return (
+      <div className="pa-acceso-denegado">
+        <div className="pa-acceso-icon">🔒</div>
+        <h2>Acceso no autorizado</h2>
+        <p>No tienes permisos para ver esta sección.</p>
+        <a href="/login" className="lab-btn-primary" style={{ display: 'inline-block', marginTop: '1rem' }}>
+          Iniciar sesión
+        </a>
       </div>
   )
 }
