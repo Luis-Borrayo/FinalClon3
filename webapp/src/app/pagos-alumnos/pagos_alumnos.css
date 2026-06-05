@@ -1325,7 +1325,6 @@ body:not(.dark-mode) .pa-stat .val {
         padding: 1rem 1.2rem;
         gap: 1rem;
     }
-
     .pa-portal-card-icon {
         font-size: 1.6rem;
         margin-bottom: 0;

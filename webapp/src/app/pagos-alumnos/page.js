@@ -1211,7 +1211,6 @@ export default function PagosAlumnos() {
         </div>
     )
   }
-
   const esAdmin  = user?.role === 'ADMIN'
   const esAlumno = user?.role === 'STUDENT'
 
