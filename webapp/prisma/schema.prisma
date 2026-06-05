@@ -1295,8 +1295,10 @@ model ReservaEspacio {
   diasRecurrencia String?
   notas           String?
   estado          EstadoReservaEspacio @default(PENDIENTE)
-  motivoRechazo   String?
-  createdAt       DateTime             @default(now())
+  motivoRechazo        String?
+  createdAt            DateTime  @default(now())
+  fechaFinRecurrencia  DateTime?
+  grupoRecurrenciaId   String?   @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 
   espacio         Espacio @relation(fields: [espacioId], references: [id], onDelete: Cascade)
 
