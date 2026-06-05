@@ -8,26 +8,36 @@ const pool = new Pool({
 
 export async function GET() {
     const client = await pool.connect()
+
     try {
         const query = `
             WITH carnets_con_pago AS (
-                SELECT carnet FROM grupo6_pago_alumnos.matricula
+                SELECT carnet
+                FROM grupo6_pago_alumnos.matricula
                 WHERE DATE_TRUNC('month', fecha_pago) = DATE_TRUNC('month', CURRENT_DATE)
+
                 UNION
-                SELECT carnet FROM grupo6_pago_alumnos.mensualidad
+
+                SELECT carnet
+                FROM grupo6_pago_alumnos.mensualidad
                 WHERE fecha_pago IS NOT NULL
                   AND DATE_TRUNC('month', fecha_pago) = DATE_TRUNC('month', CURRENT_DATE)
+
                 UNION
-                SELECT carnet FROM grupo6_pago_alumnos.pagos_varios
+
+                SELECT carnet
+                FROM grupo6_pago_alumnos.pagos_varios
                 WHERE DATE_TRUNC('month', fecha_pago) = DATE_TRUNC('month', CURRENT_DATE)
                   AND estado = 'Registrado'
             ),
-            deuda_pendiente AS (
-                SELECT carnet, COALESCE(SUM(precio + monto_mora), 0) AS total_pendiente
-                FROM grupo6_pago_alumnos.mensualidad
-                WHERE estado_pago IN ('Pendiente', 'Vencido', 'Parcial')
-                GROUP BY carnet
-            )
+                 deuda_pendiente AS (
+                     SELECT
+                         carnet,
+                         COALESCE(SUM(precio + monto_mora), 0) AS total_pendiente
+                     FROM grupo6_pago_alumnos.mensualidad
+                     WHERE estado_pago IN ('Pendiente', 'Vencido', 'Parcial')
+                     GROUP BY carnet
+                 )
             SELECT
                 ROW_NUMBER() OVER (ORDER BY a.apellido, a.nombre) AS no,
                 a.carnet,
@@ -39,12 +49,17 @@ export async function GET() {
                 CASE
                     WHEN COALESCE(dp.total_pendiente, 0) = 0 THEN 'Q0'
                     ELSE CONCAT('Q', TO_CHAR(dp.total_pendiente, 'FM999,999,990.00'))
-                END AS sin_pagar
+            END AS sin_pagar
             FROM grupo1_academico."Alumno" a
-            LEFT JOIN deuda_pendiente dp ON dp.carnet = a.carnet
-            WHERE a.carnet NOT IN (SELECT carnet FROM carnets_con_pago)
+            LEFT JOIN deuda_pendiente dp 
+                ON dp.carnet = a.carnet
+            WHERE a.carnet NOT IN (
+                SELECT carnet 
+                FROM carnets_con_pago
+            )
             ORDER BY a.apellido, a.nombre
         `
+
         const { rows } = await client.query(query)
         return NextResponse.json(rows)
     } catch (err) {
