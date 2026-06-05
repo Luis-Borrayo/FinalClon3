@@ -406,8 +406,8 @@ export default function GuiaAdminPage() {
                           <td>
                             {s.estado === "pendiente" && (
                               <>
-                                <button onClick={() => aprobarCierre(s.id)} style={{ background: "#2e7d32", color: "white", marginRight: "5px" }}>Aprobar</button>
-                                <button onClick={() => rechazarCierre(s.id)} style={{ background: "#c62828", color: "white" }}>Rechazar</button>
+                                <button onClick={() => aprobarCierre(s.id)} style={{ background: "#2e7d32", color: "white", border: "none", borderRadius: "6px", padding: "4px 12px", fontSize: "13px", fontWeight: 600, cursor: "pointer", marginRight: "6px" }}>Aprobar</button>
+                                <button onClick={() => rechazarCierre(s.id)} style={{ background: "#c62828", color: "white", border: "none", borderRadius: "6px", padding: "4px 12px", fontSize: "13px", fontWeight: 600, cursor: "pointer" }}>Rechazar</button>
                               </>
                             )}
                           </td>
