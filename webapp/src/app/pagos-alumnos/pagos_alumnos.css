@@ -1,3 +1,9 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   pagos_alumnos.css — USPG Sistema de Pagos Alumnos
+   Rediseño completo: jerarquía visual clara, tablas ordenadas, modales pulidos
+   Depende de globals.css (variables --uspg-* y clases lab-*)
+   ══════════════════════════════════════════════════════════════════════════════ */
+
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
 /* ── Variables locales ────────────────────────────────────────────────────── */
@@ -1325,9 +1331,246 @@ body:not(.dark-mode) .pa-stat .val {
         padding: 1rem 1.2rem;
         gap: 1rem;
     }
+
     .pa-portal-card-icon {
         font-size: 1.6rem;
         margin-bottom: 0;
         flex-shrink: 0;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   BENCHMARK — modal y componentes internos
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* Modal container */
+.pa-bench-modal {
+    max-width: 980px;
+    max-height: 92vh;
+    overflow-y: auto;
+}
+
+/* Header del modal con título + botón en fila */
+.pa-bench-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--pa-border);
+}
+
+.pa-bench-sub {
+    font-size: 0.75rem;
+    color: var(--pa-muted);
+    margin: 0.3rem 0 0;
+    letter-spacing: 0.03em;
+}
+
+/* Indicador de fase */
+.pa-bench-fase {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--pa-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.25rem;
+}
+
+.pa-bench-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--pa-muted);
+    flex-shrink: 0;
+}
+
+.pa-bench-dot-live {
+    background: #4ade80;
+    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4);
+    animation: pa-bench-pulse 1.2s ease-out infinite;
+}
+
+@keyframes pa-bench-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5); }
+    70%  { box-shadow: 0 0 0 7px rgba(74, 222, 128, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+/* Barra de progreso */
+.pa-bench-progress-wrap {
+    height: 3px;
+    background: var(--pa-border);
+    border-radius: 2px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.pa-bench-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pa-corinto), #ff6b8a);
+    border-radius: 2px;
+    transition: width 0.25s ease;
+}
+
+/* Separador de sección interno */
+.pa-bench-section {
+    font-size: 0.67rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--pa-muted);
+    margin: 1.4rem 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.pa-bench-section::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--pa-border);
+}
+
+.pa-bench-count {
+    font-size: 0.65rem;
+    font-weight: 500;
+    background: var(--pa-surface-hover);
+    border: 1px solid var(--pa-border);
+    border-radius: 20px;
+    padding: 0.1rem 0.5rem;
+    color: var(--pa-muted);
+    letter-spacing: 0.02em;
+}
+
+/* Grid de tarjetas de métricas */
+.pa-bench-grid {
+    display: grid;
+    gap: 0.65rem;
+    margin-bottom: 0.5rem;
+}
+
+.pa-bench-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+/* Tarjeta de métrica individual */
+.pa-bench-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--pa-border);
+    border-radius: var(--pa-radius-sm);
+    padding: 0.85rem 1rem;
+    text-align: center;
+    transition: border-color 0.15s;
+}
+
+.pa-bench-card:hover {
+    border-color: var(--pa-border-strong);
+}
+
+.pa-bench-card span {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--pa-muted);
+    margin-bottom: 0.35rem;
+}
+
+.pa-bench-card strong {
+    font-size: 1.1rem;
+    font-family: var(--pa-mono);
+    font-weight: 700;
+    color: var(--pa-text);
+    letter-spacing: -0.02em;
+}
+
+/* Pill de tipo de endpoint */
+.pa-bench-tipo {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.55rem;
+    border-radius: 20px;
+    background: rgba(167, 139, 250, 0.1);
+    color: #a78bfa;
+    border: 1px solid rgba(167, 139, 250, 0.2);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+/* Pills de modo secuencial / concurrente */
+.pa-bench-modo-seq {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.12rem 0.5rem;
+    border-radius: 20px;
+    background: rgba(14, 165, 233, 0.1);
+    color: #38bdf8;
+    border: 1px solid rgba(14, 165, 233, 0.2);
+    white-space: nowrap;
+}
+
+.pa-bench-modo-con {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.12rem 0.5rem;
+    border-radius: 20px;
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    white-space: nowrap;
+}
+
+/* Bloque de interpretación */
+.pa-bench-interpretacion {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--pa-border);
+    border-radius: var(--pa-radius-sm);
+    padding: 0.9rem 1.1rem;
+    font-size: 0.82rem;
+    color: var(--pa-muted);
+    line-height: 1.65;
+    margin-top: 0.75rem;
+}
+
+.pa-bench-interpretacion strong {
+    color: var(--pa-text);
+}
+
+/* Nav link benchmark — ligero acento diferenciado */
+.pa-nav-benchmark {
+    border: 1px solid rgba(128, 0, 32, 0.3) !important;
+    color: #ffaabc !important;
+}
+
+.pa-nav-benchmark:hover {
+    background: var(--pa-corinto) !important;
+    color: #fff !important;
+    border-color: var(--pa-corinto) !important;
+}
+
+/* ── Responsive benchmark ─────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .pa-bench-grid-4 {
+        grid-template-columns: 1fr 1fr;
+    }
+    .pa-bench-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 480px) {
+    .pa-bench-grid-4 {
+        grid-template-columns: 1fr;
     }
 }
