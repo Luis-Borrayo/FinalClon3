@@ -253,10 +253,10 @@ export default function GuiaAdminPage() {
   ]);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("cn_usuario");
-    if (!raw) { window.location.href = "/control-de-notas"; return; }
+    const raw = localStorage.getItem("user");
+    if (!raw) { window.location.href = "/login"; return; }
     const u = JSON.parse(raw);
-    if (!["ADMIN", "GUIA"].includes(u.rol)) { window.location.href = "/control-de-notas"; return; }
+    if (!["ADMIN","TEACHER"].includes(u.role)) { window.location.href = "/login"; return; }
     setUsuario(u);
     cargarDatosGrupo1();
   }, []);
@@ -307,7 +307,6 @@ export default function GuiaAdminPage() {
                 <h3 style={{ color: "#0d47a1", marginBottom: "4px" }}>👨‍🏫 Panel de Guía Académico</h3>
                 <p style={{ color: "#888", margin: 0 }}>Administración + Gestión de Estudiantes</p>
               </div>
-              <a href="/control-de-notas" style={{ color: "#888" }}>Salir</a>
             </div>
 
             <div className="card-body">

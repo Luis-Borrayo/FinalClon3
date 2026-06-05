@@ -202,10 +202,10 @@ export default function ProfesorPage() {
   const [notasPorAlumno, setNotasPorAlumno] = useState({});
 
   useEffect(() => {
-    const raw = sessionStorage.getItem("cn_usuario");
-    if (!raw) { window.location.href = "/control-de-notas"; return; }
+    const raw = localStorage.getItem("user");
+    if (!raw) { window.location.href = "/login"; return; }
     const u = JSON.parse(raw);
-    if (u.rol !== "CATEDRATICO") { window.location.href = "/control-de-notas"; return; }
+    if (u.role !== "TEACHER") { window.location.href = "/login"; return; }
     setUsuario(u);
   }, []);
 
@@ -227,7 +227,6 @@ export default function ProfesorPage() {
                 <h3 style={{ color: "#e65100" }}>👨‍🏫 {usuario?.nombre} {usuario?.apellido}</h3>
                 <p style={{ color: "#888" }}>Panel Catedrático</p>
               </div>
-              <a href="/control-de-notas" style={{ color: "#888" }}>Salir</a>
             </div>
 
             <div className="card-body">
