@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import '../laboratorios/laboratorios.css'
 import './pagos_alumnos.css'
 
 const hoy        = () => new Date().toISOString().split('T')[0]
