@@ -1,47 +1,44 @@
-// src/app/api/control-de-notas/notas/[carnet]/route.js
+import {
+  armarNotasAlumno,
+  obtenerNombreAlumno,
+  obtenerNombreCarrera,
+} from "@/app/api/control-de-notas/_lib/academico";
 
-import { NextResponse } from "next/server";
-import { getNotasByCarnet } from "@/app/mocks/control-de-notas-mocks/mockService";
-
-// ─── TODO: cuando la API real esté disponible ─────────────────────────────────
-// import { getNotasFromAPI } from "@/lib/control-de-notas/apiService";
-// const USE_MOCK = false;
-// ─────────────────────────────────────────────────────────────────────────────
+export const dynamic = "force-dynamic";
 
 export async function GET(request, { params }) {
   try {
     const { carnet } = await params;
+    const origin = request.nextUrl.origin;
 
     if (!carnet) {
-      return NextResponse.json(
-        { success: false, message: "El carnet es requerido" },
-        { status: 400 }
-      );
+      return Response.json({ success: false, message: "El carnet es requerido" }, { status: 400 });
     }
 
-    const result = getNotasByCarnet(carnet);
+    const { alumno, idAlumno, notas, resumen } = await armarNotasAlumno(origin, carnet);
 
-    if (!result.success) {
-      return NextResponse.json(
-        { success: false, message: result.message },
-        { status: result.status || 404 }
-      );
-    }
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Notas obtenidas correctamente",
-        fuenteDatos: "MOCK",
-        ...result.data,
+    return Response.json({
+      success: true,
+      alumno: {
+        id: idAlumno,
+        carnet: alumno.carnet,
+        nombre: obtenerNombreAlumno(alumno),
+        email: alumno.email ?? null,
+        correoInstitucional: alumno.correoInstitucional ?? null,
+        carrera: obtenerNombreCarrera(alumno),
       },
-      { status: 200 }
-    );
+      notas,
+      resumen,
+    });
   } catch (error) {
-    console.error("[API notas] Error:", error);
-    return NextResponse.json(
-      { success: false, message: "Error interno del servidor" },
-      { status: 500 }
+    console.error("[GET_NOTAS_ALUMNO]", error);
+    return Response.json(
+      {
+        success: false,
+        message: error.message || "Error obteniendo las notas del alumno",
+        error: error.message,
+      },
+      { status: error.status || 500 }
     );
   }
 }
