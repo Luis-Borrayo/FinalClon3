@@ -18,15 +18,15 @@ export async function GET(req, { params }) {
             return NextResponse.json({ error: 'Alumno no encontrado' }, { status: 404 })
 
         const { rows: moras } = await client.query(
-            `SELECT "Mes", "Estado_pago", "Precio", "Monto_mora", "Dias_mora", "Fecha_limite"
+            `SELECT mes, estado_pago, precio, monto_mora, dias_mora, fecha_limite
              FROM grupo6_pago_alumnos.mensualidad
-             WHERE carnet = $1 AND "Estado_pago" IN ('Pendiente', 'Vencido', 'Parcial')
-             ORDER BY "Fecha_limite" ASC`,
+             WHERE carnet = $1 AND estado_pago IN ('Pendiente', 'Vencido', 'Parcial')
+             ORDER BY fecha_limite ASC`,
             [carnet]
         )
 
-        const total_mora = moras.reduce((sum, m) => sum + parseFloat(m.Monto_mora || 0), 0)
-        const total_pendiente = moras.reduce((sum, m) => sum + parseFloat(m.Precio || 0), 0)
+        const total_mora = moras.reduce((sum, m) => sum + parseFloat(m.monto_mora || 0), 0)
+        const total_pendiente = moras.reduce((sum, m) => sum + parseFloat(m.precio || 0), 0)
 
         return NextResponse.json({
             carnet,
@@ -36,12 +36,12 @@ export async function GET(req, { params }) {
             total_pendiente: total_pendiente.toFixed(2),
             total_mora: total_mora.toFixed(2),
             detalle: moras.map(m => ({
-                mes: m.Mes,
-                estado: m.Estado_pago,
-                precio: m.Precio,
-                mora: m.Monto_mora,
-                dias_mora: m.Dias_mora,
-                fecha_limite: m.Fecha_limite
+                mes: m.mes,
+                estado: m.estado_pago,
+                precio: m.precio,
+                mora: m.monto_mora,
+                dias_mora: m.dias_mora,
+                fecha_limite: m.fecha_limite
             }))
         })
     } catch (err) {

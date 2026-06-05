@@ -16,7 +16,7 @@ export async function POST(req) {
         }
 
         const { rows: formas } = await client.query(
-            `SELECT id_forma_pago FROM grupo6_pago_alumnos.forma_pago WHERE LOWER("Nombre") = LOWER($1)`,
+            `SELECT id_forma_pago FROM grupo6_pago_alumnos.forma_pago WHERE LOWER(nombre) = LOWER($1)`,
             [forma_pago]
         )
         if (formas.length === 0) {
@@ -31,9 +31,9 @@ export async function POST(req) {
 
         const { rows } = await client.query(
             `INSERT INTO grupo6_pago_alumnos.mensualidad
-             (carnet, "Mes", "Fecha_Pago", "Fecha_limite", "Precio", id_forma_pago, "Estado_pago", "Monto_mora", "Dias_mora")
+             (carnet, mes, fecha_pago, fecha_limite, precio, id_forma_pago, estado_pago, monto_mora, dias_mora)
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-                 RETURNING id_mensualidad`,
+             RETURNING id_mensualidad`,
             [carnet, mes, fechaPago, fecha_limite, parseFloat(precio), id_forma_pago, estadoPago, montoMora, diasMora]
         )
 
@@ -42,7 +42,7 @@ export async function POST(req) {
         if (estadoPago === 'Pagado') {
             await client.query(
                 `INSERT INTO grupo6_pago_alumnos.recibos
-                 (carnet, id_referencia, tipo_referencia, "Monto_total", "Estado_validacion")
+                 (carnet, id_referencia, tipo_referencia, monto_total, estado_validacion)
                  VALUES ($1, $2, 'Mensualidad', $3, 'Emitido')`,
                 [carnet, id_mensualidad, parseFloat(precio) + montoMora]
             )
@@ -50,7 +50,7 @@ export async function POST(req) {
 
         const estadoSolvencia = estadoPago === 'Pagado' ? 'Solvente' : 'No Solvente'
         await client.query(
-            `INSERT INTO grupo6_pago_alumnos.solvenciamensual (id_mensualidad, "Estado") VALUES ($1, $2)`,
+            `INSERT INTO grupo6_pago_alumnos.solvenciamensual (id_mensualidad, estado) VALUES ($1, $2)`,
             [id_mensualidad, estadoSolvencia]
         )
 

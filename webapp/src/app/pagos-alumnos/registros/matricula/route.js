@@ -16,7 +16,7 @@ export async function POST(req) {
         }
 
         const { rows: formas } = await client.query(
-            `SELECT id_forma_pago FROM grupo6_pago_alumnos.forma_pago WHERE LOWER("Nombre") = LOWER($1)`,
+            `SELECT id_forma_pago FROM grupo6_pago_alumnos.forma_pago WHERE LOWER(nombre) = LOWER($1)`,
             [forma_pago]
         )
         if (formas.length === 0) {
@@ -25,7 +25,7 @@ export async function POST(req) {
         const id_forma_pago = formas[0].id_forma_pago
 
         const { rows: existente } = await client.query(
-            `SELECT id_matricula FROM grupo6_pago_alumnos.matricula WHERE carnet = $1 AND "Ciclo" = $2 AND "Anio" = $3`,
+            `SELECT id_matricula FROM grupo6_pago_alumnos.matricula WHERE carnet = $1 AND ciclo = $2 AND anio = $3`,
             [carnet, ciclo, parseInt(anio)]
         )
         if (existente.length > 0) {
@@ -34,15 +34,15 @@ export async function POST(req) {
 
         const { rows } = await client.query(
             `INSERT INTO grupo6_pago_alumnos.matricula
-             (carnet, "Ciclo", "Anio", "Fecha_pago", "Precio", id_forma_pago, "Estado")
+             (carnet, ciclo, anio, fecha_pago, precio, id_forma_pago, estado)
              VALUES ($1, $2, $3, $4, $5, $6, 'Confirmado')
-                 RETURNING id_matricula`,
+             RETURNING id_matricula`,
             [carnet, ciclo, parseInt(anio), fecha, parseFloat(precio), id_forma_pago]
         )
 
         await client.query(
             `INSERT INTO grupo6_pago_alumnos.recibos
-             (carnet, id_referencia, tipo_referencia, "Monto_total", "Estado_validacion")
+             (carnet, id_referencia, tipo_referencia, monto_total, estado_validacion)
              VALUES ($1, $2, 'Matricula', $3, 'Emitido')`,
             [carnet, rows[0].id_matricula, parseFloat(precio)]
         )
