@@ -938,19 +938,48 @@ function PortalAlumno({ user }) {
                           <button
                               className="btn-recibo"
                               onClick={async () => {
-                                if (!p.id_recibo) { alert('Este pago no tiene recibo asociado.'); return }
+                                if (!p.id_recibo) {
+                                  alert('Este pago no tiene recibo asociado. Puede ser un registro antiguo o no se generó recibo.')
+                                  return
+                                }
+
                                 try {
-                                  const res    = await fetch(`/pagos-alumnos/recibos/${p.id_recibo}`)
-                                  const recibo = await res.json()
-                                  if (!res.ok) throw new Error(recibo.error || 'No se pudo obtener el recibo')
+                                  const res = await fetch(`/pagos-alumnos/recibos/${p.id_recibo}`)
+
+                                  const text = await res.text()
+
+                                  let recibo
+
+                                  try {
+                                    recibo = JSON.parse(text)
+                                  } catch {
+                                    throw new Error('El servidor no devolvió un JSON válido. Revisa el endpoint /pagos-alumnos/recibos/[id].')
+                                  }
+
+                                  if (!res.ok) {
+                                    throw new Error(recibo.error || 'No se pudo obtener el recibo')
+                                  }
+
                                   setReciboActivo({
-                                    recibo: recibo.recibo, carnet: recibo.carnet,
-                                    nombre: recibo.nombre, apellido: recibo.apellido,
-                                    tipo: recibo.tipo, fecha: recibo.fecha,
-                                    monto: recibo.monto_formateado, estado: recibo.estado,
-                                    referencia: recibo.id_referencia
+                                    recibo: recibo.recibo,
+                                    id_recibo: recibo.recibo,
+                                    carnet: recibo.carnet,
+                                    nombre: recibo.nombre,
+                                    apellido: recibo.apellido,
+                                    apellidos: recibo.apellido,
+                                    tipo: recibo.tipo,
+                                    concepto: recibo.tipo,
+                                    fecha: recibo.fecha,
+                                    monto: recibo.monto_formateado,
+                                    estado: recibo.estado,
+                                    referencia: recibo.id_referencia,
+                                    descripcion: `Referencia #${recibo.id_referencia}`,
+                                    forma: p.forma || '—',
                                   })
-                                } catch (err) { alert(err.message) }
+
+                                } catch (err) {
+                                  alert(err.message)
+                                }
                               }}
                           >
                             Ver
