@@ -1,5 +1,6 @@
 import { Pool } from 'pg'
 import { NextResponse } from 'next/server'
+import { registrarAuditoriaPago } from '@/lib/auditoria-pagos'
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -53,6 +54,16 @@ export async function POST(req) {
             precio,
             estado_pago,
         } = await req.json()
+
+        await registrarAuditoriaPago(client, {
+            carnet,
+            tipo_accion: 'REGISTRO',
+            tipo_pago: 'PagoVario',
+            id_referencia: id_pagos_varios,
+            monto,
+            usuario_responsable: 'sistema',
+            descripcion: `Registro de pago varios: ${motivo_pago}`
+        })
 
         if (!carnet || !mes || !forma_pago || !fecha_limite || precio == null) {
             return NextResponse.json({ error: 'Campos requeridos faltantes' }, { status: 400 })

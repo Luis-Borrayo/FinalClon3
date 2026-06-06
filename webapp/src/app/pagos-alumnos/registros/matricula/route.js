@@ -1,5 +1,6 @@
 import { Pool } from 'pg'
 import { NextResponse } from 'next/server'
+import { registrarAuditoriaPago } from '@/lib/auditoria-pagos'
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -39,6 +40,15 @@ export async function POST(req) {
             await client.query('ROLLBACK')
             return NextResponse.json({ error: `Forma de pago "${forma_pago}" no existe.` }, { status: 400 })
         }
+        await registrarAuditoriaPago(client, {
+            carnet,
+            tipo_accion: 'REGISTRO',
+            tipo_pago: 'PagoVario',
+            id_referencia: id_pagos_varios,
+            monto,
+            usuario_responsable: 'sistema',
+            descripcion: `Registro de pago varios: ${motivo_pago}`
+        })
 
         const id_forma_pago = formas[0].id_forma_pago
 

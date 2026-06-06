@@ -973,6 +973,215 @@ function PortalAlumno({ user }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
+   VISTA AUDITORÍA — solo ADMIN
+   ══════════════════════════════════════════════════════════════════════════════ */
+const ACCIONES_COLOR = {
+  INSERT: 'badge-pagado',
+  UPDATE: 'badge-pendiente',
+  DELETE: 'badge-inactivo',
+  SELECT: 'badge-emitido',
+}
+
+function badgeAccion(accion = '') {
+  return ACCIONES_COLOR[accion.toUpperCase()] || 'badge-parcial'
+}
+
+function VistaAuditoria({ onClose }) {
+  const [auditoria,  setAuditoria]  = useState([])
+  const [cargando,   setCargando]   = useState(true)
+  const [err,        setErr]        = useState(null)
+  const [busqueda,   setBusqueda]   = useState('')
+  const [filtroAccion, setFiltroAccion] = useState('')
+  const [filtroPago,   setFiltroPago]   = useState('')
+
+  useEffect(() => { cargar() }, [])
+
+  async function cargar() {
+    setCargando(true); setErr(null)
+    try {
+      const res  = await fetch('/pagos-alumnos/auditoria')
+      if (!res.ok) throw new Error(`Error ${res.status}`)
+      setAuditoria(await res.json())
+    } catch (e) { setErr(e.message) }
+    finally { setCargando(false) }
+  }
+
+  // Valores únicos para filtros
+  const acciones   = [...new Set(auditoria.map(r => r.tipo_accion).filter(Boolean))]
+  const tiposPago  = [...new Set(auditoria.map(r => r.tipo_pago).filter(Boolean))]
+
+  const filtrados = auditoria.filter(r => {
+    const q = busqueda.toLowerCase()
+    const matchQ = !q ||
+        r.carnet?.toLowerCase().includes(q) ||
+        r.descripcion?.toLowerCase().includes(q) ||
+        String(r.id_auditoria).includes(q)
+    const matchA = !filtroAccion || r.tipo_accion === filtroAccion
+    const matchP = !filtroPago  || r.tipo_pago   === filtroPago
+    return matchQ && matchA && matchP
+  })
+
+  function formatFecha(f) {
+    if (!f) return '—'
+    return new Date(f).toLocaleString('es-GT', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    })
+  }
+
+  return (
+      <div className="lab-modal-overlay" onClick={onClose}>
+        <div className="lab-modal pa-audit-modal" onClick={e => e.stopPropagation()}>
+
+          {/* ── Encabezado ── */}
+          <div className="pa-audit-header">
+            <div>
+              <h2 className="pa-modal-title" style={{ margin: 0, textAlign: 'left' }}>
+                 Auditoría de Pagos
+              </h2>
+              <p className="pa-audit-sub">
+                Registro completo de acciones sobre el módulo de pagos
+              </p>
+            </div>
+            <div className="pa-audit-header-actions">
+              <span className="pa-audit-total">
+                {filtrados.length} registro{filtrados.length !== 1 ? 's' : ''}
+              </span>
+              <button
+                  className="lab-btn-primary"
+                  onClick={cargar}
+                  disabled={cargando}
+                  style={{ minWidth: 110 }}
+              >
+                {cargando ? '...' : '↻ Actualizar'}
+              </button>
+            </div>
+          </div>
+
+          {/* ── Filtros ── */}
+          <div className="pa-audit-filtros">
+            <input
+                className="pa-search"
+                placeholder="Buscar por carnet, descripción o ID…"
+                value={busqueda}
+                onChange={e => setBusqueda(e.target.value)}
+                style={{ flex: 1 }}
+            />
+            <select
+                className="pa-search pa-audit-select"
+                value={filtroAccion}
+                onChange={e => setFiltroAccion(e.target.value)}
+            >
+              <option value="">Todas las acciones</option>
+              {acciones.map(a => <option key={a}>{a}</option>)}
+            </select>
+            <select
+                className="pa-search pa-audit-select"
+                value={filtroPago}
+                onChange={e => setFiltroPago(e.target.value)}
+            >
+              <option value="">Todos los tipos</option>
+              {tiposPago.map(t => <option key={t}>{t}</option>)}
+            </select>
+            {(busqueda || filtroAccion || filtroPago) && (
+                <button
+                    className="pa-audit-clear"
+                    onClick={() => { setBusqueda(''); setFiltroAccion(''); setFiltroPago('') }}
+                    title="Limpiar filtros"
+                >
+                  ✕
+                </button>
+            )}
+          </div>
+
+          {/* ── Error ── */}
+          {err && (
+              <div className="pa-error-banner" style={{ marginBottom: '0.75rem' }}>
+                <span>⚠️ {err}</span>
+                <button onClick={cargar}>Reintentar</button>
+              </div>
+          )}
+
+          {/* ── Tabla ── */}
+          {cargando ? (
+              <div className="pa-loading-screen" style={{ minHeight: 200 }}>
+                <div className="pa-loading-spinner" />
+              </div>
+          ) : (
+              <div style={{ overflowX: 'auto', maxHeight: '55vh', overflowY: 'auto' }}>
+                <table className="lab-table">
+                  <thead style={{ position: 'sticky', top: 0, background: 'rgba(18,18,42,0.98)', zIndex: 1 }}>
+                  <tr>
+                    <th>ID</th>
+                    <th>Fecha y hora</th>
+                    <th>Carnet</th>
+                    <th>Acción</th>
+                    <th>Tipo pago</th>
+                    <th>Monto</th>
+                    <th>Descripción</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  {filtrados.length === 0 ? (
+                      <tr>
+                        <td colSpan={7}>
+                          {auditoria.length === 0
+                              ? 'No hay registros de auditoría aún.'
+                              : 'Ningún registro coincide con los filtros aplicados.'}
+                        </td>
+                      </tr>
+                  ) : filtrados.map(item => (
+                      <tr key={item.id_auditoria}>
+                        <td>
+                          <span className="pa-audit-id">#{item.id_auditoria}</span>
+                        </td>
+                        <td>
+                          <span className="pa-audit-fecha">{formatFecha(item.fecha_hora)}</span>
+                        </td>
+                        <td>
+                          <span className="pa-audit-carnet">{item.carnet || '—'}</span>
+                        </td>
+                        <td>
+                          <span className={badgeAccion(item.tipo_accion)}>
+                            {item.tipo_accion || '—'}
+                          </span>
+                        </td>
+                        <td>
+                          {item.tipo_pago
+                              ? <span className="pa-audit-tipo">{item.tipo_pago}</span>
+                              : <span style={{ color: 'var(--pa-muted)' }}>—</span>
+                          }
+                        </td>
+                        <td>
+                          <strong className="pa-audit-monto">
+                            Q{Number(item.monto || 0).toFixed(2)}
+                          </strong>
+                        </td>
+                        <td>
+                          <span className="pa-audit-desc" title={item.descripcion}>
+                            {item.descripcion || '—'}
+                          </span>
+                        </td>
+                      </tr>
+                  ))}
+                  </tbody>
+                </table>
+              </div>
+          )}
+
+          <button
+              className="lab-btn-primary lab-btn-danger pa-full-btn"
+              style={{ marginTop: '1.5rem' }}
+              onClick={onClose}
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
    VISTA BENCHMARK — solo ADMIN
    ══════════════════════════════════════════════════════════════════════════════ */
 
@@ -1136,7 +1345,7 @@ function VistaBenchmark({ onClose }) {
           <div className="pa-bench-header">
             <div>
               <h2 className="pa-modal-title" style={{ margin: 0, textAlign: 'left' }}>
-                Benchmark de rendimiento
+                ⚡ Benchmark de rendimiento
               </h2>
               <p className="pa-bench-sub">
                 Latencia · Throughput · Concurrencia · Elasticidad
@@ -1367,6 +1576,9 @@ function VistaAdmin() {
             <a onClick={() => setVista('agenda')} style={{ cursor: 'pointer' }}>
               <i className="fa fa-calendar" /><span>Agenda</span>
             </a>
+            <a onClick={() => setVista('auditoria')} style={{ cursor: 'pointer' }} className="pa-nav-auditoria">
+              <i className="fa fa-history" /><span>Auditoría</span>
+            </a>
             <a onClick={() => setVista('benchmark')} style={{ cursor: 'pointer' }} className="pa-nav-benchmark">
               <i className="fa fa-tachometer" /><span>Benchmark</span>
             </a>
@@ -1386,6 +1598,17 @@ function VistaAdmin() {
           <div className="pa-stat">
             <div className="val">{cargando ? '—' : dashboard.alumnos_mora}</div>
             <div className="lbl">Alumnos en Mora</div>
+          </div>
+          <div
+              className="pa-stat pa-stat-auditoria"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setVista('auditoria')}
+              title="Ver auditoría de pagos"
+          >
+            <div className="val pa-stat-icon-val">
+              <i className="fa fa-history" />
+            </div>
+            <div className="lbl">Auditoría</div>
           </div>
           <div className="pa-reg">
             <div className="reg-title">Registrar Pagos</div>
@@ -1545,6 +1768,7 @@ function VistaAdmin() {
         {vista === 'agenda'     && <VistaAgenda       onClose={() => setVista(null)} />}
         {vista === 'reportes'   && <VistaReportes     onClose={() => setVista(null)} />}
         {vista === 'benchmark'  && <VistaBenchmark    onClose={() => setVista(null)} />}
+        {vista === 'auditoria'  && <VistaAuditoria    onClose={() => setVista(null)} />}
 
         {/* ── Modal recibo ──────────────────────────────────────────────────── */}
         {reciboActivo && <ModalRecibo pago={reciboActivo} onClose={() => setReciboActivo(null)} />}

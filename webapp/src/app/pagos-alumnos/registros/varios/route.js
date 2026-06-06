@@ -1,5 +1,6 @@
 import { Pool } from 'pg'
 import { NextResponse } from 'next/server'
+import { registrarAuditoriaPago } from '@/lib/auditoria-pagos'
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -51,7 +52,14 @@ export async function POST(req) {
         )
 
         const id_pagos_varios = rows[0].id_pagos_varios
-
+        await registrarAuditoriaPago({
+            carnet,
+            tipo_accion: 'REGISTRO_PAGO_VARIOS',
+            tipo_pago: 'PagoVario',
+            id_referencia: id_pagos_varios,
+            monto: parseFloat(precio),
+            descripcion: `Pago varios registrado. Motivo: ${motivo_pago}`
+        })
         await client.query(
             `INSERT INTO grupo6_pago_alumnos.recibos
              (carnet, id_referencia, tipo_referencia, monto_total, estado_validacion)
